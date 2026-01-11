@@ -1,0 +1,247 @@
+{
+  "plot_modules": {
+    "出轨": {
+      "discovery_scene": [
+        {
+          "name": "短信发现",
+          "template": "{name}正在玩手机，突然看到{cheater}手机上弹出来一条暧昧短信：「今晚老地方见」，发信人是一个陌生的名字。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "发现者姓名"},
+            {"name": "cheater", "type": "string", "default": "老公", "description": "出轨者"}
+          ]
+        },
+        {
+          "name": "闺蜜告知",
+          "template": "{name}收到闺蜜发来的照片，照片里{cheater}正和另一个女人在酒店大堂，举止亲密。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "发现者姓名"},
+            {"name": "cheater", "type": "string", "default": "老公", "description": "出轨者"}
+          ]
+        },
+        {
+          "name": "亲眼目睹",
+          "template": "那天{place}下着大雨，{name}本来想给{cheater}送伞，却亲眼看到他和那个女人上了同一辆车。",
+          "variables": [
+            {"name": "place", "type": "string", "default": "公司楼下", "description": "地点"},
+            {"name": "name", "type": "string", "default": "她", "description": "发现者姓名"},
+            {"name": "cheater", "type": "string", "default": "老公", "description": "出轨者"}
+          ]
+        }
+      ],
+      "reaction": [
+        {
+          "name": "隐忍",
+          "template": "{name}没有当场揭穿，而是默默地离开了，心里盘算着让{cheater}付出代价的计划。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "cheater", "type": "string", "default": "他", "description": "出轨者"}
+          ]
+        },
+        {
+          "name": "爆发",
+          "template": "「你们——」{name}的怒吼声响彻整个{place}，所有人都震惊地看着这一幕。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "place", "type": "string", "default": "宴会厅", "description": "地点"}
+          ]
+        },
+        {
+          "name": "假死",
+          "template": "{name}制造了一场意外，让所有人都以为{pronoun}在那场事故中丧生了。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "pronoun", "type": "string", "default": "她", "description": "代词"}
+          ]
+        }
+      ],
+      "aftermath": [
+        {
+          "name": "离婚",
+          "template": "协议书摆在桌上，{name}冷冷地说：「签了吧，从此两不相欠。」",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"}
+          ]
+        },
+        {
+          "name": "复仇",
+          "template": "三年后，{name}以全新的身份回来了，而{cheater}的公司，即将迎来一场腥风血雨。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "cheater", "type": "string", "default": "他", "description": "复仇对象"}
+          ]
+        }
+      ]
+    },
+    "掉马": {
+      "identity_types": [
+        {
+          "name": "豪门继承人",
+          "template": "原来{name}竟然是{family}集团失散多年的继承人，这个身份曝光后，所有人都震惊了。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "family", "type": "string", "default": "李氏", "description": "家族名"}
+          ]
+        },
+        {
+          "name": "金牌主播",
+          "template": "那个神秘的主播「{nickname}」，竟然就是{name}！",
+          "variables": [
+            {"name": "nickname", "type": "string", "default": "夜莺", "description": "主播名"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"}
+          ]
+        },
+        {
+          "name": "神秘大佬",
+          "template": "{name}摘下口罩的那一刻，所有人都倒吸一口凉气——这竟然是那位传说中的{title}！",
+          "variables": [
+            {"name": "name", "type": "string", "default": "他", "description": "主角姓名"},
+            {"name": "title", "type": "string", "default": "X先生", "description": "称号"}
+          ]
+        }
+      ],
+      "trigger": [
+        {
+          "name": "意外相遇",
+          "template": "在那场{event}上，{name}和{other}意外相遇，两人的真实身份都在那一刻暴露了。",
+          "variables": [
+            {"name": "event", "type": "string", "default": "慈善晚宴", "description": "事件"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "other", "type": "string", "default": "他", "description": "对方"}
+          ]
+        },
+        {
+          "name": "物品暴露",
+          "template": "{name}不小心遗落了{item}，上面的标志让{other}瞬间明白了{name}的真实身份。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "item", "type": "string", "default": "家徽戒指", "description": "物品"},
+            {"name": "other", "type": "string", "default": "他", "description": "发现者"}
+          ]
+        }
+      ]
+    },
+    "假死": {
+      "methods": [
+        {
+          "name": "车祸",
+          "template": "那辆{color}轿车冲出护栏，坠入深海。救援队搜寻了三天三夜，只找到{name}的{item}。",
+          "variables": [
+            {"name": "color", "type": "string", "default": "白色", "description": "颜色"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "item", "type": "string", "default": "结婚戒指", "description": "遗物"}
+          ]
+        },
+        {
+          "name": "火灾",
+          "template": "{place}的那场大火烧了一整夜，{name}「葬身火海」的消息传遍了整个城市。",
+          "variables": [
+            {"name": "place", "type": "string", "default": "别墅", "description": "地点"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"}
+          ]
+        }
+      ],
+      "return_scene": [
+        {
+          "name": "几年后归来",
+          "template": "{years}年后，在{event}上，一个熟悉又陌生的身影出现了——是{name}！",
+          "variables": [
+            {"name": "years", "type": "number", "default": 3, "description": "年数"},
+            {"name": "event", "type": "string", "default": "商业峰会", "description": "事件"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"}
+          ]
+        },
+        {
+          "name": "婚礼归来",
+          "template": "在{groom}和{bride}的婚礼上，大门被推开，{name}微笑着走进来：「听说我死了？」",
+          "variables": [
+            {"name": "groom", "type": "string", "default": "他", "description": "新郎"},
+            {"name": "bride", "type": "string", "default": "那个女人", "description": "新娘"},
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"}
+          ]
+        }
+      ],
+      "transformation": [
+        {
+          "name": "身份提升",
+          "template": "现在的{name}，已经不再是当年那个{old_status}，而是{new_status}。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "old_status", "type": "string", "default": "卑微的妻子", "description": "旧身份"},
+            {"name": "new_status", "type": "string", "default": "叱咤风云的商界女王", "description": "新身份"}
+          ]
+        }
+      ]
+    },
+    "豪门恩怨": {
+      "power_struggle": [
+        {
+          "name": "夺权",
+          "template": "{name}拿出了那份足以让{enemy}身败名裂的证据，冷冷地说：「{company}从此姓{name}了。」",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "enemy", "type": "string", "default": "继母", "description": "敌人"},
+            {"name": "company", "type": "string", "default": "集团", "description": "公司名"}
+          ]
+        },
+        {
+          "name": "继承权",
+          "template": "遗嘱宣读完毕，所有人都不敢相信——{name}竟然继承了{percentage}的股份！",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "percentage", "type": "string", "default": "51%", "description": "股份比例"}
+          ]
+        }
+      ]
+    },
+    "追妻火葬场": {
+      "regret": [
+        {
+          "name": "幡然醒悟",
+          "template": "直到{name}离开后，{he}才发现自己早已爱上了{pronoun}，可是后悔已经来不及了。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "主角姓名"},
+            {"name": "he", "type": "string", "default": "他", "description": "男主"},
+            {"name": "pronoun", "type": "string", "default": "她", "description": "代词"}
+          ]
+        }
+      ],
+      "pursuit": [
+        {
+          "name": "卑微求原谅",
+          "template": "「求你，再给我一次机会。」{he}跪在{name}面前，声音颤抖。",
+          "variables": [
+            {"name": "he", "type": "string", "default": "他", "description": "男主"},
+            {"name": "name", "type": "string", "default": "她", "description": "女主"}
+          ]
+        },
+        {
+          "name": "付出代价",
+          "template": "为了{name}，{he}放弃了{something}，甚至差点失去{his}性命。",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "女主"},
+            {"name": "he", "type": "string", "default": "他", "description": "男主"},
+            {"name": "something", "type": "string", "default": "所有的家产", "description": "放弃的东西"},
+            {"name": "his", "type": "string", "default": "自己的", "description": "代词"}
+          ]
+        }
+      ],
+      "rejection": [
+        {
+          "name": "冷漠拒绝",
+          "template": "「{he}，我们已经结束了。」{name}的眼神冷得像冰，「请你自重。」",
+          "variables": [
+            {"name": "he", "type": "string", "default": "他", "description": "男主"},
+            {"name": "name", "type": "string", "default": "她", "description": "女主"}
+          ]
+        },
+        {
+          "name": "已经放下",
+          "template": "「对不起，我已经放下你了。」{name}平静地说，「现在的我，很幸福。」",
+          "variables": [
+            {"name": "name", "type": "string", "default": "她", "description": "女主"}
+          ]
+        }
+      ]
+    }
+  }
+}

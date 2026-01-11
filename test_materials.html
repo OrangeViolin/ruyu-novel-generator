@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试 - 素材库功能</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>📚 素材库功能测试</h1>
+    <div id="status">正在测试...</div>
+    
+    <div>
+        <button onclick="testAPI()">测试API连接</button>
+        <button onclick="testListMaterials()">测试获取素材列表</button>
+    </div>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/health');
+                const data = await response.json();
+                
+                status.className = 'status success';
+                status.textContent = '✅ 服务器连接正常';
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ 服务器连接失败';
+                result.textContent = error.message;
+            }
+        }
+        
+        async function testListMaterials() {
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/materials');
+                const data = await response.json();
+                
+                status.className = 'status success';
+                status.textContent = `✅ API正常 - 共 ${data.materials ? data.materials.length : 0} 个素材`;
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '❌ API调用失败';
+                result.textContent = error.message;
+            }
+        }
+        
+        // 自动测试API
+        window.onload = () => testAPI();
+    </script>
+</body>
+</html>

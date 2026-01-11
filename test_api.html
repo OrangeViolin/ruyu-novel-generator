@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>API测试</title>
+</head>
+<body>
+    <h1>API连接测试</h1>
+    <button onclick="testAgents()">测试智能体API</button>
+    <button onclick="testHealth()">测试健康检查</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testAgents() {
+            const result = document.getElementById('result');
+            result.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/agents');
+                result.textContent = '状态: ' + response.status + '\n\n' + 
+                                  await response.text();
+            } catch (error) {
+                result.textContent = '错误: ' + error.message;
+            }
+        }
+        
+        async function testHealth() {
+            const result = document.getElementById('result');
+            result.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/health');
+                result.textContent = '状态: ' + response.status + '\n\n' + 
+                                  await response.text();
+            } catch (error) {
+                result.textContent = '错误: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

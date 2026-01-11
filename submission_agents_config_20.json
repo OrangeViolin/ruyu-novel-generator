@@ -1,0 +1,690 @@
+[
+  {
+    "name": "婚姻与家庭杂志",
+    "description": "专为【婚姻与家庭杂志】定制的投稿智能体",
+    "channel_type": "emotion",
+    "target_audience": "关注emotion的读者",
+    "channel_characteristics": {
+      "topics": [
+        "亲密关系",
+        "情感问题",
+        "婚姻经营",
+        "自我成长"
+      ],
+      "tone": "温暖、共情、细腻",
+      "special_requirements": "要求：热点、婚姻情感美文、人物故事、两性关系。3000字以内。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "24717106@qq.com",
+      "payment": "稿费：400元-5000元/篇"
+    },
+    "writing_style": {
+      "tone": "温暖、共情、细腻",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "全民故事计划",
+    "description": "专为【全民故事计划】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：故事须为真实，不超过5000字，最好能提供与故事相关的照片。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "tougao@quanmingushi.com",
+      "payment": "稿费：500~2000/千字"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "人间thelivings",
+    "description": "专为【人间thelivings】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：非虚构故事，字数3000-12000字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "thelivings@vip.163.com",
+      "payment": "稿费：500-1000元/千字"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "真实故事计划",
+    "description": "专为【真实故事计划】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：第一人称叙事，故事要求真实，只要你认定你的故事值得记录，我们都期待倾听。5000字以内。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "tougao@zhenshigushijihua.com",
+      "payment": "稿费：300-1000元/千字"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "我是九爷",
+    "description": "专为【我是九爷】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：情感故事，一个作者一周内不能超过两篇。字数5000字以上。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": null,
+      "payment": "稿费：jiuye2021@163.com"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "主编讲故事",
+    "description": "专为【主编讲故事】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：隐私情感、极品婆媳、婚姻故事、行业故事。故事内容要体现主人公挣扎、纠结和最后的抉择。5000字以内。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "caozhubian@126.com",
+      "payment": "稿费：200-500元/篇，签约作者400-1000元/篇"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "娇娇妈",
+    "description": "专为【娇娇妈】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "约稿：热点解析、亲子教育、育儿方法、家庭故事"
+    },
+    "length_requirements": {
+      "min": 2000,
+      "max": 3000
+    },
+    "contact": {
+      "email": "1476867280@qq.com",
+      "payment": "稿费：600元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "我们是有故事的人",
+    "description": "专为【我们是有故事的人】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：非虚构写作，要职业故事、成长故事、世相故事，不要小说和虚构故事。字数5000字以内。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "wmsygsdr@163.com",
+      "payment": "稿费：150-500元/千字"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "天才捕手计划",
+    "description": "专为【天才捕手计划】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：冒险故事、传奇经历，要有高密度的情节、丰满可感的细节。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "storyhunting@163.com",
+      "payment": "稿费：500-1000元/千字"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "丹妈读童书",
+    "description": "专为【丹妈读童书】定制的投稿智能体",
+    "channel_type": "parenting",
+    "target_audience": "关注parenting的读者",
+    "channel_characteristics": {
+      "topics": [
+        "育儿经验",
+        "亲子关系",
+        "家庭教育",
+        "妈妈成长"
+      ],
+      "tone": "亲切、实用、有经验感",
+      "special_requirements": "要求：育儿技巧、婚姻育儿吐槽、深度观点。2000-3500字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "3501841368@qq.com",
+      "payment": "稿费：1000元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、实用、有经验感",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "稿事编辑部",
+    "description": "专为【稿事编辑部】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：影评/剧评（热门影视剧评论），娱评（具有社会话题的娱乐新闻评论），字数2000-3000字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "major_ent@163.com",
+      "payment": "稿费：300-500元/千字"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "拾遗",
+    "description": "专为【拾遗】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：人物类、观点类原创稿件"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "3452915316@qq.com",
+      "payment": "稿费：3000元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "真实职业故事",
+    "description": "专为【真实职业故事】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：各行各业的真实故事。5000字以内"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "2251126555@qq.com",
+      "payment": "稿费：200元/千字"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "我要whatYouNeed",
+    "description": "专为【我要whatYouNeed】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：新颖/故事"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "hello@whatyouneed.cc",
+      "payment": "稿费：1000元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "槽值",
+    "description": "专为【槽值】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：或有趣或有料，能吐槽、能鸡汤。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "czgirl163@163.com",
+      "payment": "稿费：400元/千字"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "真实故事FM",
+    "description": "专为【真实故事FM】定制的投稿智能体",
+    "channel_type": "story",
+    "target_audience": "关注story的读者",
+    "channel_characteristics": {
+      "topics": [
+        "真实经历",
+        "人物故事",
+        "成长历程",
+        "社会观察"
+      ],
+      "tone": "真实、有温度、细节丰富",
+      "special_requirements": "要求：讲述自己亲身经历的感情经历。故事要突出人性真善美，揭露人性的丑恶虚伪。最重要的是，真实，真实！真实！！4500字以内。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "yujianaifei@126.com",
+      "payment": "稿费：100元-500元/篇（每月过稿4篇，奖励600元）"
+    },
+    "writing_style": {
+      "tone": "真实、有温度、细节丰富",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.4
+    }
+  },
+  {
+    "name": "storybook",
+    "description": "专为【storybook】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：可以是一次真实经历，也可以是一个有趣的虚拟故事。关键在于是否能够打动人心，引起共鸣，3000字-15000字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "storybook@storybook2012.cn",
+      "payment": "稿费：500-1000元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "枕蜜",
+    "description": "专为【枕蜜】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：意林旗下公众号，主要面向28-38岁女性，涉及家庭、婚姻、情感、教育。每篇2000-3000字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "kangning03@163.com",
+      "payment": "稿费：200-300元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "卡娃微卡",
+    "description": "专为【卡娃微卡】定制的投稿智能体",
+    "channel_type": "general",
+    "target_audience": "关注general的读者",
+    "channel_characteristics": {
+      "topics": [
+        "生活感悟",
+        "个人成长"
+      ],
+      "tone": "亲切、有深度",
+      "special_requirements": "要求：家庭美学、事件人物、历史文化、走心影评、当下热点、尤其喜欢事件人物。有深度。2000-2500字。"
+    },
+    "length_requirements": null,
+    "contact": {
+      "email": "2669673883@qq.com",
+      "payment": "稿费：500元/篇"
+    },
+    "writing_style": {
+      "tone": "亲切、有深度",
+      "sentence_style": "流畅自然，有温度",
+      "opening_pattern": "故事/案例引入或观点抛出",
+      "closing_pattern": "总结升华或行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "引入",
+        "正文",
+        "升华"
+      ],
+      "story_ratio": 0.2
+    }
+  },
+  {
+    "name": "武志红公众号",
+    "description": "专为【武志红公众号】定制的投稿智能体 - 专注心理学与个人成长",
+    "channel_type": "psychology",
+    "target_audience": "25-45岁关注自我成长和心理健康的都市人群",
+    "channel_characteristics": {
+      "topics": [
+        "亲密关系",
+        "情绪管理",
+        "自我认知",
+        "原生家庭",
+        "心理健康",
+        "个人成长",
+        "心理创伤疗愈"
+      ],
+      "tone": "温暖、深刻、专业而不失温度，有洞察力",
+      "special_requirements": "需要有真实案例支撑，避免空洞说教，要有深度分析，文风温暖但有力量"
+    },
+    "length_requirements": {
+      "min": 2000,
+      "max": 5000
+    },
+    "contact": {
+      "email": null,
+      "payment": "优质稿件稿费优厚"
+    },
+    "writing_style": {
+      "tone": "温暖、深刻、专业",
+      "sentence_style": "流畅优美，富有哲理，善用比喻",
+      "opening_pattern": "从真实案例或生活现象引入",
+      "closing_pattern": "给出有启发的思考和行动建议"
+    },
+    "content_structure": {
+      "sections": [
+        "现象引入",
+        "深度分析",
+        "案例支撑",
+        "总结升华"
+      ],
+      "story_ratio": 0.5
+    }
+  }
+]
