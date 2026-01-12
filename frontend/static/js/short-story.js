@@ -489,6 +489,16 @@ function displayShortStoryResult(data) {
 
     // 拼接全文
     let fullText = '';
+
+    // 1. 添加标题
+    fullText += `${data.title || '未命名'}\n\n`;
+
+    // 2. 添加导语 (如有)
+    if (data.intro) {
+        fullText += `${data.intro}\n\n`;
+    }
+
+    // 3. 添加正文
     if (data.chapters && data.chapters.length > 0) {
         data.chapters.forEach(ch => {
             fullText += `${ch.title}\n\n${ch.content}\n\n`;
@@ -574,60 +584,164 @@ function resetShortStory() {
 }
 
 // 一键生成全书流程
+// 一键生成全书流程 (支持批量)
 async function startShortStoryOneClick() {
-    isShortStoryOneClickMode = true;
-    showToast('🚀 正在启动短故事一键生成流程...', 'info');
+    // 1. 获取批量生成数量
+    const countSelect = document.getElementById('short-story-count');
+    const batchCount = countSelect ? parseInt(countSelect.value) : 1;
 
-    // Step 1: 生成设定
-    const success1 = await generateShortStorySettings();
-    if (!success1) {
-        isShortStoryOneClickMode = false;
-        showToast('❌ 设定生成失败，流程终止', 'error');
+    // 2. 检查题材
+    const genre = document.getElementById('short-story-genre').value;
+    if (!genre) {
+        alert('请选择题材类型');
         return;
     }
 
-    // Auto-proceed to Step 2 -> 3
-    if (isShortStoryOneClickMode) {
-        showToast('✅ 设定生成完成，正在自动生成大纲...', 'info');
-        setTimeout(async () => {
-            const success2 = await generateShortStoryOutline();
-            if (!success2) {
+    isShortStoryOneClickMode = true;
+
+    // 批量生成的数据存储
+    const batchResults = [];
+    const errors = [];
+
+    // 循环生成
+    for (let i = 1; i <= batchCount; i++) {
+        showToast(`🚀 正在启动第 ${i}/${batchCount} 篇短故事生成...`, 'info');
+
+        // 如果是第2篇及以上，重置一下数据状态，但保留Step1的用户设置
+        if (i > 1) {
+            shortStoryData.step2 = {};
+            shortStoryData.step3 = {};
+            shortStoryData.step4 = {};
+            shortStoryData.step5 = {};
+        }
+
+        // Step 1: 生成设定
+        // 修改: 为了避免重复，如果摘要为空，后端已有随机逻辑。
+        // 我们只需调用函数，它会读取当前表单值。
+        const success1 = await generateShortStorySettings();
+        if (!success1) {
+            errors.push(`第 ${i} 篇设定生成失败`);
+            if (batchCount === 1) {
                 isShortStoryOneClickMode = false;
-                showToast('❌ 大纲生成失败，流程终止', 'error');
                 return;
             }
+            continue;
+        }
 
-            // Auto-proceed to Step 3 -> 4
-            if (isShortStoryOneClickMode) {
-                showToast('✅ 大纲生成完成，正在自动生成章节...', 'info');
-                setTimeout(async () => {
-                    const success3 = await generateShortStoryChapters();
-                    if (!success3) {
-                        isShortStoryOneClickMode = false;
-                        showToast('❌ 章节生成失败，流程终止', 'error');
-                        return;
-                    }
-
-                    // Auto-proceed to Step 4 -> 5
-                    if (isShortStoryOneClickMode) {
-                        showToast('✅ 章节生成完成，正在整合成文...', 'info');
-                        setTimeout(async () => {
-                            const success4 = await generateShortStoryNovel();
-                            if (!success4) {
-                                isShortStoryOneClickMode = false;
-                                showToast('❌ 成文失败，流程终止', 'error');
-                                return;
-                            }
-
-                            isShortStoryOneClickMode = false;
-                            showToast('🎉 短故事一键生成完成！', 'success');
-                        }, 1000);
-                    }
-                }, 1000);
+        // Step 2: 生成大纲
+        showToast(`✅ 第 ${i}/${batchCount} 篇: 设定完成，生成大纲...`, 'info');
+        await new Promise(r => setTimeout(r, 1000));
+        const success2 = await generateShortStoryOutline();
+        if (!success2) {
+            errors.push(`第 ${i} 篇大纲生成失败`);
+            if (batchCount === 1) {
+                isShortStoryOneClickMode = false;
+                return;
             }
-        }, 1000);
+            continue;
+        }
+
+        // Step 3: 生成章节
+        showToast(`✅ 第 ${i}/${batchCount} 篇: 大纲完成，生成章节...`, 'info');
+        await new Promise(r => setTimeout(r, 1000));
+        const success3 = await generateShortStoryChapters();
+        if (!success3) {
+            errors.push(`第 ${i} 篇章节生成失败`);
+            if (batchCount === 1) {
+                isShortStoryOneClickMode = false;
+                return;
+            }
+            continue;
+        }
+
+        // Step 4: 一键成文
+        showToast(`✅ 第 ${i}/${batchCount} 篇: 章节完成，整合成文...`, 'info');
+        await new Promise(r => setTimeout(r, 1000));
+        const success4 = await generateShortStoryNovel();
+        if (!success4) {
+            errors.push(`第 ${i} 篇成文失败`);
+            if (batchCount === 1) {
+                isShortStoryOneClickMode = false;
+                return;
+            }
+            continue;
+        }
+
+        // 保存结果
+        if (shortStoryData.step5 && shortStoryData.step5.project_id) {
+            batchResults.push(shortStoryData.step5);
+        }
+
+        // 稍微等待一下
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
+    isShortStoryOneClickMode = false;
+
+    // 最终展示
+    if (batchResults.length > 0) {
+        if (batchCount > 1) {
+            displayBatchResults(batchResults, errors);
+            showToast(`🎉 批量生成完成！成功 ${batchResults.length}/${batchCount} 篇`, 'success');
+        } else {
+            // 单篇直接显示结果(generateShortStoryNovel里已经调用了displayShortStoryResult)
+            showToast('🎉 短故事生成完成！', 'success');
+        }
+    } else {
+        showToast('❌ 生成失败', 'error');
     }
 }
+
+// 显示批量生成结果
+function displayBatchResults(results, errors) {
+    const content = document.getElementById('short-story-result');
+
+    let html = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+            <h3 style="color: var(--success-color); margin-bottom: 1rem;">批量生成完成!</h3>
+            <p>共成功生成 <strong>${results.length}</strong> 篇短故事</p>
+        </div>
+        
+        <div class="batch-results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    `;
+
+    results.forEach((navel, idx) => {
+        html += `
+            <div class="batch-card" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                 <h4 style="margin-bottom: 0.5rem; color: var(--primary-color);">#${idx + 1} ${escapeHtml(navel.title)}</h4>
+                 <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    字数: ${navel.chapters ? navel.chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0) : 0} | ID: ${navel.project_id}
+                 </div>
+                 <div style="display: flex; gap: 0.5rem;">
+                    <a href="/api/novel/export/${navel.project_id}" class="btn btn-sm btn-primary" target="_blank">📥 导出</a>
+                 </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    if (errors.length > 0) {
+        html += `
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; margin-top: 2rem;">
+                <h4 style="color: var(--danger-color);">⚠️ 部分生成失败</h4>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    ${errors.map(e => `<li>${e}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    html += `
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="resetShortStory()">🔄 继续创作</button>
+        </div>
+    `;
+
+    content.innerHTML = html;
+}
+
 
 // HTML转义函数 (如果不存在则定义)
 if (typeof escapeHtml !== 'function') {

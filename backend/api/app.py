@@ -3771,7 +3771,7 @@ class ShortStorySettingsRequest(BaseModel):
     genre: str
     perspective: str = "first"
     summary: str = ""
-    targetWords: int = 15000
+    targetWords: int = 22000
     chapterCount: int = 8
     tropes: List[str] = []
 
@@ -3813,21 +3813,25 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
 **创作要求:**
 
 1. **标题** (非常重要):
-   - 接近30字，三段式结构
+   - 严格控制在25字以内，三段式结构
    - 包含: 人物关系 + 亮点爆点 + 情感共鸣
    - 有故事感、画面感、悬念感
-   - 示例: "同学聚会意外遇到公公，回家后他竟给我一万封口费"
+   - 示例: "同学聚会遇到公公，回家后他竟给我一万封口费"
 
 2. **故事简介**: 50-100字，点明核心冲突
 
 3. **主要矛盾**: 必须极其强烈，能推动整个故事发展
 
-4. **角色设定** (人物要极致):
+4. **文风要求**:
+   - 接地气，生活化，拒绝翻译腔
+   - 设定要新颖，反套路
+
+5. **角色设定** (人物要极致):
    - 主角: 鲜明极致的性格，有致命缺陷
    - 反派: 极端反面性格，有合理动机
    - 人物不超过4个
 
-5. **黄金三章设计**:
+6. **黄金三章设计**:
    - 第一章钩子: 开头100字直入主题的极强看点
    - 第二章冲突: 矛盾升级
    - 第三章爆发: 情绪高潮
@@ -3835,7 +3839,7 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
 请严格按照以下JSON格式返回:
 ```json
 {{
-  "title": "接近30字的三段式标题",
+  "title": "25字以内的三段式标题",
   "summary": "50-100字故事简介",
   "main_conflict": "核心矛盾描述",
   "genre": "{request.genre}",
@@ -3883,7 +3887,7 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
     try:
         settings = request.settings
         chapter_count = settings.get('chapter_count', 8)
-        target_words = settings.get('target_words', 15000)
+        target_words = settings.get('target_words', 22000)
         
         # 计算每章字数
         words_per_chapter = target_words // chapter_count
@@ -4015,7 +4019,8 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
 {"4. 开头100字必须直入主题，制造极强看点" if is_first_chapter else "4. 承接上文，快速推进"}
 5. 心理描写: 重点刻画，烘托氛围
 6. 结尾: 必须有悬念或转折
-7. 禁止: 赘述、水分、冗长描写
+7. 文风: 接地气，生活化，用词要新，拒绝陈旧套路
+8. 禁止: 赘述、水分、冗长描写
 
 直接输出章节内容，不要有任何说明。
 """
@@ -4084,7 +4089,7 @@ async def generate_short_story_novel(request: ShortStoryNovelRequest):
             background=settings.get('genre', ''),
             genre="短故事",
             core_conflict=settings.get('main_conflict', ''),
-            target_words=settings.get('target_words', 15000),
+            target_words=settings.get('target_words', 22000),
             status="completed",
             outline=outline,
             characters=settings.get('characters', []),
