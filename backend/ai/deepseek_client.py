@@ -23,7 +23,7 @@ class DeepSeekClient:
 
     def _call_api(self, messages: List[Dict], **kwargs) -> str:
         """
-        调用DeepSeek API
+        调用DeepSeek API（带重试机制）
 
         Args:
             messages: 消息列表
@@ -32,19 +32,38 @@ class DeepSeekClient:
         Returns:
             模型返回的文本
         """
+        import time
+
         # 设置默认参数
         params = {
             "model": self.model,
             "messages": messages,
             "temperature": kwargs.get("temperature", 0.7),
+            "timeout": kwargs.get("timeout", 120.0)  # 设置超时
         }
 
         # 添加可选参数
         if "max_tokens" in kwargs:
             params["max_tokens"] = kwargs["max_tokens"]
 
-        response = self.client.chat.completions.create(**params)
-        return response.choices[0].message.content
+        # 重试机制
+        max_retries = 3
+        retry_delay = 2  # 秒
+
+        for attempt in range(max_retries):
+            try:
+                response = self.client.chat.completions.create(**params)
+                return response.choices[0].message.content
+
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"API调用失败（第{attempt + 1}次尝试）: {e}")
+                    print(f"等待{retry_delay}秒后重试...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 指数退避
+                else:
+                    print(f"API调用失败，已达最大重试次数: {e}")
+                    raise
 
     def chat(self, prompt: str, temperature: float = 0.7, **kwargs) -> str:
         """

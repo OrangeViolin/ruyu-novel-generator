@@ -49,8 +49,48 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 添加请求日志中间件
+@app.middleware("http")
+async def log_requests(request, call_next):
+    import time
+    start_time = time.time()
+
+    # 读取请求体（如果有的话）
+    body = None
+    if request.method in ["POST", "PUT", "PATCH"]:
+        try:
+            body = await request.body()
+            print(f"\n{'='*50}")
+            print(f"{request.method} {request.url.path}")
+            print(f"Content-Length: {len(body) if body else 0} bytes")
+            if body and len(body) < 10000:
+                print(f"Body preview: {body[:500]}")
+            print(f"{'='*50}\n")
+        except Exception as e:
+            print(f"Error reading body: {e}")
+
+    response = await call_next(request)
+
+    process_time = time.time() - start_time
+    print(f"{request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s")
+
+    return response
+
 # 挂载静态文件
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
+
+class CachedStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if isinstance(response, Response):
+            # 禁用浏览器缓存
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+app.mount("/static", CachedStaticFiles(directory="frontend/static"), name="static")
 
 # 初始化核心组件
 ai_client = DeepSeekClient(api_key=settings.deepseek_api_key, model=settings.deepseek_model)
@@ -2971,51 +3011,41 @@ async def generate_inspiration_settings(request: InspirationRequest):
         prompt += """
 
 **要求:**
-请生成一个完整、详细、有吸引力的小说设定,包括:
+请生成一个简洁但完整的小说设定:
 
-**第一部分: 核心矛盾挖掘**
-1. 主角的核心欲望（想要什么？）
-2. 核心阻碍（什么在阻挡他？）
-3. 失败后果（如果不成功会发生什么悲剧？）
-4. 独特卖点（这个故事与其他作品的不同之处）
+**第一部分: 核心矛盾**
+1. 主角的核心欲望
+2. 核心阻碍
+3. 失败后果
+4. 独特卖点
 
 **第二部分: 基本信息**
-1. 小说标题 (要吸引人,有网感)
-2. 副标题 (可选,补充说明主题)
-3. 故事简介 (200-300字,简洁有力)
+1. 小说标题 (吸引人,有网感)
+2. 副标题
+3. 故事简介 (150字左右)
 
-**第三部分: 世界观设定**
-1. 时空背景 (具体的时间地点描述)
-2. 世界规则 (如果有特殊设定)
-3. 社会结构 (阶层、权力关系等)
-4. 组织机构设定 (重要组织、门派、公司等)
-5. 文化特色 (风俗习惯、价值观念等)
+**第三部分: 世界观**
+1. 时空背景
+2. 世界规则
+3. 社会结构
 
-**第四部分: 角色设定** (至少3个主要角色,包含主角和反派)
+**第四部分: 角色设定** (2-3个主要角色)
 对于每个角色,请提供:
 - 姓名
 - 角色类型 (protagonist/antagonist/supporting)
-- 核心身份 (100字)
-- 核心性格 (150字,包含缺陷)
-- 性格缺陷 (明确指出)
-- 缺陷如何影响剧情
-- 核心动机 (100字)
-- 成长方向 (100字)
+- 核心身份 (50字)
+- 核心性格 (80字,包含缺陷)
+- 核心动机 (50字)
 
-**第五部分: 黄金三章锚点** (前3000字的钩子设计)
-1. 第一章钩子: 开篇如何抓住编辑/读者?
-2. 第二章冲突: 什么矛盾让读者继续看下去?
-3. 第三章转折: 什么意外让故事升级?
-
-**第六部分: 元素碰撞建议** (反差萌、反直觉设定)
-提供2-3个反直觉的角色设定或情节设定
+**第五部分: 黄金三章**
+1. 第一章钩子
+2. 第二章冲突
+3. 第三章转折
 
 **重要:**
-- 设定要具体、有创意,避免俗套
-- 角色要有立体感和成长空间
-- 适合网文读者的阅读习惯
-- 考虑后续情节发展的可能性
-- 性格缺陷要真实,会影响剧情发展
+- 设定要简洁有力,避免冗长
+- 每个字段控制在50-80字
+- 角色描述简明扼要但立体
 
 请严格按照以下JSON格式返回,不要有任何额外文字:
 ```json
@@ -3032,58 +3062,45 @@ async def generate_inspiration_settings(request: InspirationRequest):
   "setting": {
     "time_space": "时空背景",
     "world_rules": "世界规则",
-    "social_structure": "社会结构",
-    "organizations": "组织机构",
-    "culture": "文化特色"
+    "social_structure": "社会结构"
   },
   "characters": [
     {
       "name": "角色名",
       "role_type": "protagonist",
       "core_identity": "核心身份",
-      "core_personality": "核心性格",
-      "personality_flaw": "性格缺陷",
-      "flaw_consequence": "缺陷如何影响剧情",
-      "core_motivation": "核心动机",
-      "growth_direction": "成长方向"
+      "core_personality": "核心性格(包含缺陷)",
+      "core_motivation": "核心动机"
     }
   ],
   "golden_three_chapters": {
     "chapter1_hook": "第一章钩子",
     "chapter2_conflict": "第二章冲突",
     "chapter3_twist": "第三章转折"
-  },
-  "element_collisions": [
-    {
-      "description": "反差设定描述",
-      "example": "具体例子"
-    }
-  ]
+  }
 }
 ```
 """
 
         # 调用AI生成
         messages = [{"role": "user", "content": prompt}]
-        response_content = ai_client._call_api(messages, temperature=0.85)
+        # 降低max_tokens避免API连接问题
+        response_content = ai_client._call_api(messages, temperature=0.85, max_tokens=4000, timeout=180.0)
 
-        # 解析JSON
-        import json
-        import re
+        print("=" * 50)
+        print("AI原始响应长度:", len(response_content))
+        print("AI原始响应（前2000字符）:")
+        print(response_content[:2000])
+        print("=" * 50)
 
-        # 提取JSON
-        json_match = re.search(r'```json\s*(.*?)\s*```', response_content, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            start_idx = response_content.find('{')
-            end_idx = response_content.rfind('}') + 1
-            if start_idx != -1 and end_idx > start_idx:
-                json_str = response_content[start_idx:end_idx]
-            else:
-                raise HTTPException(status_code=500, detail="AI生成的内容格式错误")
+        # 使用增强的JSON解析函数
+        settings_data = parse_json_response(response_content)
 
-        settings_data = json.loads(json_str)
+        if not settings_data:
+            raise HTTPException(
+                status_code=500,
+                detail="AI生成的内容格式错误，无法解析为有效的JSON。请重试。"
+            )
 
         return {
             "success": True,
@@ -3215,12 +3232,13 @@ async def generate_inspiration_outline(request: OutlineRequest):
 
         # 调用AI生成
         messages = [{"role": "user", "content": prompt}]
-        response_content = ai_client._call_api(messages, temperature=0.8)
+        response_content = ai_client._call_api(messages, temperature=0.8, max_tokens=8000)  # 增加到8000 tokens
 
         # 打印原始响应用于调试
         print("=" * 50)
-        print("AI原始响应:")
-        print(response_content[:2000])  # 只打印前2000字符
+        print("AI原始响应长度:", len(response_content))
+        print("AI原始响应（前3000字符）:")
+        print(response_content[:3000])
         print("=" * 50)
 
         # 解析JSON
@@ -3249,6 +3267,100 @@ async def generate_inspiration_outline(request: OutlineRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def fix_truncated_json(json_str: str) -> str:
+    """尝试修复被截断的JSON字符串"""
+    import re
+
+    # 检查是否被截断（最后一个字符不是闭合括号）
+    if not json_str.rstrip().endswith('}') and not json_str.rstrip().endswith(']'):
+        # 跟踪括号平衡和在字符串内部的状态
+        brace_count = 0
+        bracket_count = 0
+        in_string = False
+        escape_next = False
+        last_complete_pos = -1
+        last_field_end_pos = -1
+
+        for i, char in enumerate(json_str):
+            if escape_next:
+                escape_next = False
+                continue
+
+            if char == '\\':
+                escape_next = True
+                continue
+
+            if char == '"' and not escape_next:
+                in_string = not in_string
+                # 记录字符串结束的位置
+                if not in_string:
+                    last_field_end_pos = i
+                continue
+
+            # 如果在字符串内部，跳过括号计数
+            if in_string:
+                continue
+
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                # 当括号平衡且不在字符串内时，记录位置
+                if brace_count == 0 and bracket_count == 0:
+                    last_complete_pos = i
+            elif char == '[':
+                bracket_count += 1
+            elif char == ']':
+                bracket_count -= 1
+                # 当括号平衡且不在字符串内时，记录位置
+                if brace_count == 0 and bracket_count == 0:
+                    last_complete_pos = i
+
+        # 如果找到了完整的位置，截取到那里
+        if last_complete_pos > 0:
+            json_str = json_str[:last_complete_pos + 1]
+            return json_str
+
+        # 如果没有完整的位置，回退到上一个字段的结尾
+        if last_field_end_pos > 0:
+            # 找到上一个字段结尾后的位置
+            # 需要找到字段的结束符号（逗号或括号）
+            truncated = json_str[:last_field_end_pos + 1]
+
+            # 查找下一个非空白字符
+            j = last_field_end_pos + 1
+            while j < len(json_str) and json_str[j].isspace():
+                j += 1
+
+            # 如果后面是逗号，包含它
+            if j < len(json_str) and json_str[j] == ',':
+                truncated = json_str[:j + 1]
+            else:
+                # 没有逗号，添加一个
+                truncated += ','
+
+            # 闭合括号
+            open_braces = truncated.count('{') - truncated.count('}')
+            open_brackets = truncated.count('[') - truncated.count(']')
+
+            truncated += '}' * open_braces
+            truncated += ']' * open_brackets
+
+            return truncated
+
+        # 最后的手段：简单地闭合括号
+        if json_str.count('"') % 2 != 0:
+            json_str += '"'
+
+        open_braces = json_str.count('{') - json_str.count('}')
+        open_brackets = json_str.count('[') - json_str.count(']')
+
+        json_str += '}' * open_braces
+        json_str += ']' * open_brackets
+
+    return json_str
+
+
 def parse_json_response(response_content: str):
     """智能解析AI返回的JSON，包含多层容错和修复"""
     import json
@@ -3270,6 +3382,9 @@ def parse_json_response(response_content: str):
 
     if not json_str:
         return None
+
+    # 尝试修复截断的JSON
+    json_str = fix_truncated_json(json_str)
 
     # 尝试直接解析
     try:
@@ -3335,8 +3450,14 @@ def fix_json_string(json_str: str) -> str:
 async def generate_inspiration_chapters(request: ChaptersRequest):
     """第三步: 生成章节内容"""
     try:
+        print("=" * 50)
+        print("收到生成章节请求")
+        print("=" * 50)
+
         settings = request.settings
         outline = request.outline
+
+        print(f"大纲章节数: {len(outline.get('chapters', []))}")
 
         # 检查是否有解析错误
         if outline.get('parse_error'):
@@ -3347,7 +3468,19 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
 
         chapters = outline.get('chapters', [])
 
-        if not chapters:
+        print(f"大纲包含 {len(chapters)} 个章节")
+
+        # 验证章节数据完整性
+        valid_chapters = []
+        for idx, ch in enumerate(chapters):
+            if not ch.get('summary'):
+                print(f"警告: 第 {idx+1} 章缺少 summary 字段，跳过")
+                continue
+            valid_chapters.append(ch)
+
+        print(f"有效的章节数: {len(valid_chapters)}")
+
+        if not valid_chapters:
             # 检查是否有raw_response
             if 'raw_response' in outline:
                 raise HTTPException(
@@ -3355,7 +3488,10 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
                     detail="大纲格式错误：AI返回的不是有效的大纲格式。请重新生成大纲。"
                 )
             else:
-                raise HTTPException(status_code=400, detail="大纲中没有章节，请检查上一步的大纲生成结果")
+                raise HTTPException(status_code=400, detail="大纲中没有有效章节，请检查上一步的大纲生成结果")
+
+        # 使用验证后的章节列表
+        chapters = valid_chapters
 
         # 构建角色上下文
         character_context = "\n".join([
@@ -3366,7 +3502,9 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
         # 生成每个章节的内容
         generated_chapters = []
 
-        for chapter_outline in chapters:
+        print(f"开始生成 {len(chapters)} 个章节...")
+
+        for idx, chapter_outline in enumerate(chapters):
             chapter_num = chapter_outline.get('chapter_number', 1)
             title = chapter_outline.get('title', f'第{chapter_num}章')
             summary = chapter_outline.get('summary', '')
@@ -3374,8 +3512,11 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
             target_words = chapter_outline.get('target_words', 2000)
             characters_involved = chapter_outline.get('characters', [])
 
-            # 构建章节生成提示词
-            prompt = f"""你是专业的网文作家。请根据以下大纲创作章节内容。
+            print(f"正在生成第 {idx+1}/{len(chapters)} 章: {title}")
+
+            try:
+                # 构建章节生成提示词
+                prompt = f"""你是专业的网文作家。请根据以下大纲创作章节内容。
 
 **小说信息:**
 标题: {settings.get('title', '未命名')}
@@ -3405,19 +3546,35 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
 请直接输出章节内容,不要有任何额外说明或标题。
 """
 
-            # 调用AI生成
-            messages = [{"role": "user", "content": prompt}]
-            chapter_content = ai_client._call_api(messages, temperature=0.85)
+                # 调用AI生成
+                messages = [{"role": "user", "content": prompt}]
+                chapter_content = ai_client._call_api(messages, temperature=0.85, max_tokens=4000)
 
-            generated_chapters.append({
-                "chapter_number": chapter_num,
-                "title": title,
-                "summary": summary,
-                "content": chapter_content,
-                "word_count": len(chapter_content),
-                "plot_points": plot_points,
-                "characters": characters_involved
-            })
+                print(f"第 {idx+1} 章生成完成，内容长度: {len(chapter_content)}")
+
+                generated_chapters.append({
+                    "chapter_number": chapter_num,
+                    "title": title,
+                    "summary": summary,
+                    "content": chapter_content,
+                    "word_count": len(chapter_content),
+                    "plot_points": plot_points,
+                    "characters": characters_involved
+                })
+            except Exception as e:
+                print(f"第 {idx+1} 章生成失败: {e}")
+                import traceback
+                traceback.print_exc()
+                # 继续生成下一章，不要中断整个流程
+                continue
+
+        print(f"章节生成完成，成功生成 {len(generated_chapters)}/{len(chapters)} 章")
+
+        if not generated_chapters:
+            raise HTTPException(
+                status_code=500,
+                detail="所有章节生成均失败，请检查AI服务配置或稍后重试"
+            )
 
         return {
             "success": True,

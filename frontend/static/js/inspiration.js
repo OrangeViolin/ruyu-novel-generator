@@ -87,6 +87,9 @@ async function generateInpiration() {
     `;
 
     try {
+        console.log('准备发送生成设定请求，数据:', data);
+        console.log('请求数据大小:', JSON.stringify(data).length, '字符');
+
         // 调用后端API
         const response = await fetch('/api/inspiration/generate-settings', {
             method: 'POST',
@@ -95,6 +98,8 @@ async function generateInpiration() {
             },
             body: JSON.stringify(data)
         });
+
+        console.log('收到响应，状态:', response.status);
 
         const result = await response.json();
 
@@ -514,16 +519,38 @@ async function generateChapters() {
     `;
 
     try {
+        // 验证数据有效性
+        console.log('准备生成章节，数据检查:', {
+            hasSettings: !!inspirationData.step2,
+            hasOutline: !!inspirationData.step3,
+            chaptersCount: inspirationData.step3?.chapters?.length || 0
+        });
+
+        const requestData = {
+            settings: inspirationData.step2,
+            outline: inspirationData.step3
+        };
+
+        console.log('请求数据大小:', JSON.stringify(requestData).length, '字符');
+
+        // 创建一个超时控制器
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10分钟超时
+
         const response = await fetch('/api/inspiration/generate-chapters', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                settings: inspirationData.step2,
-                outline: inspirationData.step3
-            })
+            body: JSON.stringify(requestData),
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
         const result = await response.json();
 
@@ -541,12 +568,27 @@ async function generateChapters() {
         }
     } catch (error) {
         console.error('生成章节失败:', error);
-        chaptersContent.innerHTML = `
-            <div class="loading-state" style="color: var(--danger-color);">
-                <p>❌ 生成失败: ${error.message}</p>
-                <button class="btn btn-primary" onclick="goToStep(3)" style="margin-top: 1rem;">返回重试</button>
-            </div>
-        `;
+
+        // 检查是否是超时错误
+        if (error.name === 'AbortError') {
+            chaptersContent.innerHTML = `
+                <div class="loading-state" style="color: var(--danger-color);">
+                    <p>⏱️ 生成超时（超过10分钟）</p>
+                    <p style="font-size: 0.9rem; margin-top: 1rem;">AI生成所有章节需要较长时间，请稍后重试或减少章节数量。</p>
+                    <button class="btn btn-primary" onclick="goToStep(3)" style="margin-top: 1rem;">返回重试</button>
+                </div>
+            `;
+        } else {
+            chaptersContent.innerHTML = `
+                <div class="loading-state" style="color: var(--danger-color);">
+                    <p>❌ 生成失败: ${error.message}</p>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                        提示: 请检查浏览器控制台获取详细错误信息
+                    </p>
+                    <button class="btn btn-primary" onclick="goToStep(3)" style="margin-top: 1rem;">返回重试</button>
+                </div>
+            `;
+        }
     }
 }
 
