@@ -589,7 +589,7 @@ async def polish_text(request: PolishRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/novel/export/{project_id}")
+@app.get("/api/novel/export/{project_id}")
 async def export_novel_to_word(project_id: int):
     """导出小说为Word文档"""
     try:
@@ -3233,7 +3233,7 @@ async def generate_inspiration_outline(request: OutlineRequest):
 
         # 调用AI生成
         messages = [{"role": "user", "content": prompt}]
-        response_content = ai_client._call_api(messages, temperature=0.8, max_tokens=8000)  # 增加到8000 tokens
+        response_content = ai_client._call_api(messages, temperature=0.8, max_tokens=8000, timeout=600)  # 增加到8000 tokens，超时10分钟
 
         # 打印原始响应用于调试
         print("=" * 50)
@@ -3759,6 +3759,447 @@ async def generate_inspiration_novel(request: NovelRequest):
 
     except HTTPException:
         raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== 短故事创作助手 API ==========
+
+class ShortStorySettingsRequest(BaseModel):
+    genre: str
+    perspective: str = "first"
+    summary: str = ""
+    targetWords: int = 15000
+    chapterCount: int = 8
+    tropes: List[str] = []
+
+
+class ShortStoryOutlineRequest(BaseModel):
+    settings: Dict[str, Any]
+
+
+class ShortStoryChaptersRequest(BaseModel):
+    settings: Dict[str, Any]
+    outline: Dict[str, Any]
+
+
+class ShortStoryNovelRequest(BaseModel):
+    settings: Dict[str, Any]
+    outline: Dict[str, Any]
+    chapters: Dict[str, Any]
+
+
+@app.post("/api/short-story/generate-settings")
+async def generate_short_story_settings(request: ShortStorySettingsRequest):
+    """短故事: 生成设定 (含30字标题、极致人设)"""
+    try:
+        tropes_str = "、".join(request.tropes) if request.tropes else "自由发挥"
+        perspective_str = "第一人称" if request.perspective == "first" else "第三人称"
+        
+        prompt = f"""你是专业的短故事创作专家。请根据以下要求生成一个短故事设定。
+
+**核心规范:**
+- 字数限制: 严格{request.targetWords}字以内，一篇完结
+- 节奏: 紧凑，剧情跌宕起伏
+- 视角: {perspective_str}
+- 题材: {request.genre}
+- 爆点梗: {tropes_str}
+
+**用户灵感:**
+{request.summary if request.summary else "由AI自由发挥创意"}
+
+**创作要求:**
+
+1. **标题** (非常重要):
+   - 接近30字，三段式结构
+   - 包含: 人物关系 + 亮点爆点 + 情感共鸣
+   - 有故事感、画面感、悬念感
+   - 示例: "同学聚会意外遇到公公，回家后他竟给我一万封口费"
+
+2. **故事简介**: 50-100字，点明核心冲突
+
+3. **主要矛盾**: 必须极其强烈，能推动整个故事发展
+
+4. **角色设定** (人物要极致):
+   - 主角: 鲜明极致的性格，有致命缺陷
+   - 反派: 极端反面性格，有合理动机
+   - 人物不超过4个
+
+5. **黄金三章设计**:
+   - 第一章钩子: 开头100字直入主题的极强看点
+   - 第二章冲突: 矛盾升级
+   - 第三章爆发: 情绪高潮
+
+请严格按照以下JSON格式返回:
+```json
+{{
+  "title": "接近30字的三段式标题",
+  "summary": "50-100字故事简介",
+  "main_conflict": "核心矛盾描述",
+  "genre": "{request.genre}",
+  "perspective": "{perspective_str}",
+  "target_words": {request.targetWords},
+  "chapter_count": {request.chapterCount},
+  "tropes": {json.dumps(request.tropes, ensure_ascii=False)},
+  "characters": [
+    {{
+      "name": "角色名",
+      "role_type": "protagonist/antagonist/supporting",
+      "identity": "核心身份",
+      "personality": "极致性格描述",
+      "flaw": "致命缺陷"
+    }}
+  ],
+  "golden_chapters": {{
+    "chapter1": "第一章钩子设计",
+    "chapter2": "第二章冲突设计",
+    "chapter3": "第三章爆发设计"
+  }}
+}}
+```
+"""
+        
+        messages = [{"role": "user", "content": prompt}]
+        response = ai_client._call_api(messages, temperature=0.9, max_tokens=4000)
+        
+        result = parse_json_response(response)
+        
+        if result:
+            return {"success": True, "data": result}
+        else:
+            return {"success": False, "message": "AI响应解析失败", "raw": response[:1000]}
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/short-story/generate-outline")
+async def generate_short_story_outline(request: ShortStoryOutlineRequest):
+    """短故事: 生成大纲 (紧凑节奏，每章设钩子)"""
+    try:
+        settings = request.settings
+        chapter_count = settings.get('chapter_count', 8)
+        target_words = settings.get('target_words', 15000)
+        
+        # 计算每章字数
+        words_per_chapter = target_words // chapter_count
+        
+        prompt = f"""你是专业的短故事大纲创作专家。基于以下设定生成紧凑的章节大纲。
+
+**小说设定:**
+标题: {settings.get('title', '未命名')}
+简介: {settings.get('summary', '')}
+主要矛盾: {settings.get('main_conflict', '')}
+题材: {settings.get('genre', '')}
+
+**角色:**
+{json.dumps(settings.get('characters', []), ensure_ascii=False, indent=2)}
+
+**黄金三章设计:**
+{json.dumps(settings.get('golden_chapters', {}), ensure_ascii=False, indent=2)}
+
+**大纲要求:**
+1. 共 {chapter_count} 章，总字数 {target_words} 字
+2. 每章约 {words_per_chapter} 字
+3. 节奏极其紧凑，不设水分
+4. 每章必须设置:
+   - 次要矛盾或悬念
+   - 结尾钩子 (吸引继续阅读)
+5. 前30%设置最强解锁点
+6. 情绪曲线要跌宕起伏
+
+请按JSON格式返回:
+```json
+{{
+  "total_chapters": {chapter_count},
+  "target_words": {target_words},
+  "emotion_curve": [
+    {{"chapter": 1, "intensity": 7, "type": "紧张"}}
+  ],
+  "chapters": [
+    {{
+      "chapter_number": 1,
+      "title": "章节标题",
+      "summary": "章节摘要 (100字)",
+      "target_words": {words_per_chapter},
+      "hook": "本章钩子/悬念",
+      "secondary_conflict": "次要矛盾",
+      "emotion_intensity": 7,
+      "emotion_type": "紧张"
+    }}
+  ]
+}}
+```
+"""
+        
+        messages = [{"role": "user", "content": prompt}]
+        response = ai_client._call_api(messages, temperature=0.85, max_tokens=8000, timeout=600)
+        
+        # 尝试清理和解析
+        result = parse_json_response(response)
+        
+        if result:
+            return {"success": True, "data": result}
+        else:
+            # 如果解析失败，尝试构建一个基本的结构返回，避免前端报错
+            print(f"大纲JSON解析失败，尝试构建基础结构。原始响应长度: {len(response)}")
+            return {
+                "success": True, 
+                "data": {
+                    "total_chapters": chapter_count,
+                    "target_words": target_words,
+                    "chapters": [],
+                    "note": "AI生成的大纲格式有误，请重试或手动编辑"
+                },
+                "message": "大纲生成部分失败，请重试"
+            }
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/short-story/generate-chapters")
+async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
+    """短故事: 并行生成章节 (开头直入主题，心理描写重点)"""
+    try:
+        settings = request.settings
+        outline = request.outline
+        chapters = outline.get('chapters', [])
+        
+        if not chapters:
+            raise HTTPException(status_code=400, detail="大纲中没有章节")
+        
+        # 构建角色上下文
+        character_context = "\n".join([
+            f"**{c.get('name', '')}**: {c.get('identity', '')} - {c.get('personality', '')}"
+            for c in settings.get('characters', [])
+        ])
+        
+        perspective = settings.get('perspective', '第一人称')
+        
+        def generate_single_chapter(idx, chapter_outline):
+            chapter_num = chapter_outline.get('chapter_number', idx + 1)
+            title = chapter_outline.get('title', f'第{chapter_num}章')
+            summary = chapter_outline.get('summary', '')
+            target_words = chapter_outline.get('target_words', 2000)
+            hook = chapter_outline.get('hook', '')
+            
+            is_first_chapter = (chapter_num == 1)
+            
+            prompt = f"""你是专业的短故事作家。请创作第{chapter_num}章内容。
+
+**小说信息:**
+标题: {settings.get('title', '')}
+视角: {perspective}
+本章: 第{chapter_num}章 - {title}
+
+**本章摘要:**
+{summary}
+
+**本章钩子/悬念:**
+{hook}
+
+**角色:**
+{character_context}
+
+**创作要求:**
+1. 字数: 严格{target_words}字左右
+2. 视角: {perspective}视角叙述
+3. 节奏: 极其紧凑，不要拖沓
+{"4. 开头100字必须直入主题，制造极强看点" if is_first_chapter else "4. 承接上文，快速推进"}
+5. 心理描写: 重点刻画，烘托氛围
+6. 结尾: 必须有悬念或转折
+7. 禁止: 赘述、水分、冗长描写
+
+直接输出章节内容，不要有任何说明。
+"""
+            try:
+                messages = [{"role": "user", "content": prompt}]
+                content = ai_client._call_api(messages, temperature=0.85, max_tokens=4000)
+                
+                return {
+                    "chapter_number": chapter_num,
+                    "title": title,
+                    "summary": summary,
+                    "content": content,
+                    "word_count": len(content),
+                    "index": idx
+                }
+            except Exception as e:
+                print(f"章节 {chapter_num} 生成失败: {e}")
+                return None
+        
+        # 并行生成
+        print(f"开始并行生成 {len(chapters)} 章短故事...")
+        generated_chapters = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_idx = {
+                executor.submit(generate_single_chapter, idx, ch): idx
+                for idx, ch in enumerate(chapters)
+            }
+            
+            results = []
+            for future in concurrent.futures.as_completed(future_to_idx):
+                result = future.result()
+                if result:
+                    results.append(result)
+            
+            results.sort(key=lambda x: x["index"])
+            
+            for res in results:
+                del res["index"]
+                generated_chapters.append(res)
+        
+        print(f"短故事章节生成完成，成功 {len(generated_chapters)}/{len(chapters)} 章")
+        
+        return {"success": True, "data": {"chapters": generated_chapters}}
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/short-story/generate-novel")
+async def generate_short_story_novel(request: ShortStoryNovelRequest):
+    """短故事: 一键成文 (创建项目并保存)"""
+    try:
+        settings = request.settings
+        outline = request.outline
+        chapters_data = request.chapters
+        
+        db = next(get_db())
+        
+        # 创建项目
+        project = NovelProject(
+            name=settings.get('title', '未命名短故事'),
+            theme=settings.get('summary', ''),
+            background=settings.get('genre', ''),
+            genre="短故事",
+            core_conflict=settings.get('main_conflict', ''),
+            target_words=settings.get('target_words', 15000),
+            status="completed",
+            outline=outline,
+            characters=settings.get('characters', []),
+            chapters=[],
+            word_count=0
+        )
+        
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+        
+        # 转换章节格式
+        chapters = []
+        total_words = 0
+        
+        for ch in chapters_data.get('chapters', []):
+            chapter = {
+                "id": ch.get('chapter_number', 1),
+                "title": ch.get('title', ''),
+                "summary": ch.get('summary', ''),
+                "content": ch.get('content', ''),
+                "word_count": ch.get('word_count', 0),
+                "order": ch.get('chapter_number', 1)
+            }
+            chapters.append(chapter)
+            total_words += ch.get('word_count', 0)
+        
+        project.chapters = chapters
+        project.word_count = total_words
+        db.commit()
+        
+        # 创建角色和章节数据
+        for char in settings.get('characters', []):
+            try:
+                character = Character(
+                    project_id=project.id,
+                    name=char.get('name', '未命名'),
+                    role_type=char.get('role_type', 'supporting'),
+                    importance='core' if char.get('role_type') == 'protagonist' else 'important',
+                    core_identity=char.get('identity'),
+                    core_personality=char.get('personality'),
+                    personality_flaw=char.get('flaw'),
+                    source="short_story_assistant"
+                )
+                db.add(character)
+            except Exception as e:
+                print(f"创建角色失败: {e}")
+        
+        for idx, ch in enumerate(chapters_data.get('chapters', [])):
+            try:
+                plot_outline = PlotOutline(
+                    project_id=project.id,
+                    level="chapter",
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    summary=ch.get('summary', ''),
+                    target_words=ch.get('word_count', 2000),
+                    source="short_story_assistant",
+                    status="generated",
+                    order=ch.get('chapter_number', idx + 1)
+                )
+                db.add(plot_outline)
+                db.flush()
+                
+                chapter_draft = ChapterDraft(
+                    project_id=project.id,
+                    outline_id=plot_outline.id,
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    content=ch.get('content', ''),
+                    word_count=ch.get('word_count', 0),
+                    status="completed",
+                    generation_params={"source": "short_story_assistant"}
+                )
+                db.add(chapter_draft)
+            except Exception as e:
+                print(f"创建章节数据失败: {e}")
+        
+        db.commit()
+        
+        # 生成精彩导语
+        try:
+            intro_prompt = f"""请为这部短故事写一段精彩的推荐导语（Blurb）。
+标题: {project.name}
+题材: {project.background}
+核心矛盾: {project.core_conflict}
+简介: {project.theme}
+
+要求:
+1. 100-150字
+2. 提炼故事最吸引人的亮点
+3. 语言极具感染力，让人看一眼就想读下去
+4. 也就是"最值得读"的理由
+
+直接输出导语内容。"""
+            
+            intro_messages = [{"role": "user", "content": intro_prompt}]
+            intro_content = ai_client._call_api(intro_messages, temperature=0.9, max_tokens=500)
+            project.intro = intro_content # 假设模型有这个字段，或者暂时只返回给前端
+        except Exception as e:
+            print(f"导语生成失败: {e}")
+            intro_content = project.theme
+
+        return {
+            "success": True,
+            "data": {
+                "project_id": project.id,
+                "title": project.name,
+                "intro": intro_content,
+                "chapters": chapters,
+                "total_words": total_words
+            },
+            "message": "短故事生成完成!"
+        }
+        
     except Exception as e:
         import traceback
         traceback.print_exc()

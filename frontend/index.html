@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网文生成工具</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%236366f1'/><stop offset='100%' style='stop-color:%234f46e5'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='url(%23grad)'/><text x='16' y='22' font-family='Arial' font-size='18' font-weight='bold' fill='white' text-anchor='middle'>✍️</text></svg>">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%236366f1'/><stop offset='100%' style='stop-color:%234f46e5'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='url(%23grad)'/><text x='16' y='22' font-family='Arial' font-size='18' font-weight='bold' fill='white' text-anchor='middle'>✍️</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css?v=9">
 </head>
+
 <body>
     <div id="app">
         <!-- 顶部导航 -->
@@ -19,6 +22,7 @@
                 <button class="nav-btn" data-tab="agents">🤖 AI智能体</button>
                 <button class="nav-btn" data-tab="channel-agents">📰 渠道智能体</button>
                 <button class="nav-btn" data-tab="inspiration">💡 创作灵感助手</button>
+                <button class="nav-btn" data-tab="short-story">📝 短故事助手</button>
                 <button class="nav-btn" data-tab="collaborative">🤝 协作写作</button>
                 <button class="nav-btn" data-tab="generator">生成器</button>
                 <button class="nav-btn" data-tab="projects">我的项目</button>
@@ -137,7 +141,8 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>故事简介</label>
-                                    <textarea id="inspiration-summary" rows="3" placeholder="例如:一个现代都市女性穿越到古代成为公主的故事..."></textarea>
+                                    <textarea id="inspiration-summary" rows="3"
+                                        placeholder="例如:一个现代都市女性穿越到古代成为公主的故事..."></textarea>
                                 </div>
                             </div>
                             <div class="form-row">
@@ -193,8 +198,10 @@
                                 <input type="text" id="inspiration-elements" placeholder="例如:重生,复仇,豪门恩怨,身份错位...">
                             </div>
                             <div class="form-actions">
-                                <button type="button" class="btn btn-primary" onclick="generateInpiration()">✨ AI生成设定</button>
-                                <button type="button" class="btn btn-success" onclick="startOneClickGeneration()" style="background-color: #10b981; margin-left: 10px;">🚀 一键生成全书</button>
+                                <button type="button" class="btn btn-primary" onclick="generateInpiration()">✨
+                                    AI生成设定</button>
+                                <button type="button" class="btn btn-success" onclick="startOneClickGeneration()"
+                                    style="background-color: #10b981; margin-left: 10px;">🚀 一键生成全书</button>
                             </div>
                         </form>
                     </div>
@@ -264,6 +271,225 @@
                         <div class="form-actions" id="step-5-actions" style="display: none;">
                             <button type="button" class="btn" onclick="exportNovel()">📥 导出小说</button>
                             <button type="button" class="btn btn-primary" onclick="resetInspiration()">🔄 重新创作</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 短故事助手标签页 -->
+            <div id="tab-short-story" class="tab-content">
+                <div class="inspiration-panel">
+                    <div class="panel-header">
+                        <h2>📝 短故事创作助手</h2>
+                        <p class="panel-desc">3万字以内短篇完结故事,节奏紧凑,剧情跌宕</p>
+                    </div>
+
+                    <!-- 步骤指示器 -->
+                    <div class="step-indicator">
+                        <div class="step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">灵感收集</div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="step" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">生成设定</div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="step" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">生成大纲</div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="step" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">生成章节</div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="step" data-step="5">
+                            <div class="step-number">5</div>
+                            <div class="step-label">一键成文</div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤1: 灵感收集 -->
+                    <div id="short-story-step-1" class="step-content active">
+                        <div class="step-header">
+                            <h3>📝 第一步: 灵感收集</h3>
+                            <p>选择题材、爆点梗,填写灵感(留空则AI随机生成)</p>
+                        </div>
+                        <form id="short-story-form" class="inspiration-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>题材类型 *</label>
+                                    <select id="short-story-genre" required>
+                                        <option value="">请选择题材</option>
+                                        <optgroup label="现代言情">
+                                            <option value="现言甜宠">现言甜宠 (小白轻松、网络热梗)</option>
+                                            <option value="现实情感">现实情感 (真实细腻、社会痛点)</option>
+                                        </optgroup>
+                                        <optgroup label="古代言情">
+                                            <option value="古言甜宠">古言甜宠 (甜宠少女、浪漫感强)</option>
+                                            <option value="古言虐恋">古言虐恋 (精致写意、虐恋拉扯)</option>
+                                        </optgroup>
+                                        <optgroup label="其他题材">
+                                            <option value="悬疑推理">悬疑推理 (现实与幻想、伏笔悬念)</option>
+                                            <option value="现实生活">现实生活 (新闻特性、社会话题)</option>
+                                            <option value="末日幻想">末日幻想</option>
+                                            <option value="科幻">科幻</option>
+                                            <option value="自然冒险">自然冒险</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>叙事视角</label>
+                                    <select id="short-story-perspective">
+                                        <option value="first">第一人称</option>
+                                        <option value="third">第三人称</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>爆点梗选择 (可多选)</label>
+                                <div class="checkbox-group"
+                                    style="max-height: 150px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 1rem; border-radius: 8px;">
+                                    <label><input type="checkbox" name="short-story-trope" value="心灰意冷"> 心灰意冷</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="复婚学乖"> 复婚学乖</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="重生只要家产">
+                                        重生只要家产</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="久别重逢"> 久别重逢</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="替罪梗"> 替罪梗</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="换子疑云"> 换子疑云</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="听心声"> 听心声</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="萌宝"> 萌宝</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="真假千金"> 真假千金</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="地下恋当众社死">
+                                        地下恋当众社死</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="新欢打脸"> 新欢打脸</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="追妻火葬场"> 追妻火葬场</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="皇权更迭"> 皇权更迭</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="重生打脸"> 重生打脸</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="换嫁"> 换嫁</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="马甲文"> 马甲文</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="隐婚生子"> 隐婚生子</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="装穷"> 装穷</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="出轨"> 出轨</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="狗血高级"> 狗血但高级</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="绿茶"> 绿茶</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="捞女"> 捞女</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="脚踏N条船"> 脚踏N条船</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="非典型小三"> 非典型小三</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="天生犟种"> 天生犟种</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="坏种"> 坏种</label>
+                                    <label><input type="checkbox" name="short-story-trope" value="反驳型人格"> 反驳型人格</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>故事灵感/简介 (可选)</label>
+                                <textarea id="short-story-summary" rows="3"
+                                    placeholder="描述你的故事灵感,例如:一个都市白领发现自己的老公竟然是..."></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>目标字数</label>
+                                    <select id="short-story-words">
+                                        <option value="8000">8000字 (微短篇)</option>
+                                        <option value="15000" selected>15000字 (短篇)</option>
+                                        <option value="25000">25000字 (中短篇)</option>
+                                        <option value="30000">30000字 (上限)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>章节数</label>
+                                    <select id="short-story-chapters">
+                                        <option value="5">5章</option>
+                                        <option value="8" selected>8章</option>
+                                        <option value="10">10章</option>
+                                        <option value="15">15章</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-primary" onclick="generateShortStorySettings()">✨
+                                    生成设定</button>
+                                <button type="button" class="btn btn-success" onclick="startShortStoryOneClick()"
+                                    style="background-color: #10b981; margin-left: 10px;">🚀 一键生成全书</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 步骤2: 生成设定 -->
+                    <div id="short-story-step-2" class="step-content" style="display: none;">
+                        <div class="step-header">
+                            <h3>📚 第二步: 小说设定</h3>
+                            <p>AI生成的短故事设定,含30字标题和极致人设</p>
+                        </div>
+                        <div id="short-story-settings-content" class="settings-content">
+                            <div class="loading-state">
+                                <p>⏳ AI正在创作中,请稍候...</p>
+                            </div>
+                        </div>
+                        <div class="form-actions" id="short-story-step-2-actions" style="display: none;">
+                            <button type="button" class="btn" onclick="goToShortStoryStep(1)">← 返回</button>
+                            <button type="button" class="btn btn-primary" onclick="generateShortStoryOutline()">→
+                                生成大纲</button>
+                        </div>
+                    </div>
+
+                    <!-- 步骤3: 生成大纲 -->
+                    <div id="short-story-step-3" class="step-content" style="display: none;">
+                        <div class="step-header">
+                            <h3>📋 第三步: 章节大纲</h3>
+                            <p>紧凑节奏,黄金三章设计,每节设置钩子</p>
+                        </div>
+                        <div id="short-story-outline-content" class="outline-content">
+                            <div class="loading-state">
+                                <p>⏳ AI正在生成大纲,请稍候...</p>
+                            </div>
+                        </div>
+                        <div class="form-actions" id="short-story-step-3-actions" style="display: none;">
+                            <button type="button" class="btn" onclick="goToShortStoryStep(2)">← 返回</button>
+                            <button type="button" class="btn btn-primary" onclick="generateShortStoryChapters()">→
+                                生成章节</button>
+                        </div>
+                    </div>
+
+                    <!-- 步骤4: 生成章节 -->
+                    <div id="short-story-step-4" class="step-content" style="display: none;">
+                        <div class="step-header">
+                            <h3>📖 第四步: 章节内容</h3>
+                            <p>开头100字直入主题,心理描写重点</p>
+                        </div>
+                        <div id="short-story-chapters-content" class="chapters-content">
+                            <div class="loading-state">
+                                <p>⏳ AI正在创作章节,请稍候...</p>
+                            </div>
+                        </div>
+                        <div class="form-actions" id="short-story-step-4-actions" style="display: none;">
+                            <button type="button" class="btn" onclick="goToShortStoryStep(3)">← 返回</button>
+                            <button type="button" class="btn btn-primary" onclick="generateShortStoryNovel()">→
+                                一键成文</button>
+                        </div>
+                    </div>
+
+                    <!-- 步骤5: 一键成文 -->
+                    <div id="short-story-step-5" class="step-content" style="display: none;">
+                        <div class="step-header">
+                            <h3>🎉 第五步: 完成</h3>
+                            <p>您的短故事已生成完毕!</p>
+                        </div>
+                        <div id="short-story-result" class="novel-result">
+                            <div class="loading-state">
+                                <p>⏳ 正在整合成文,请稍候...</p>
+                            </div>
+                        </div>
+                        <div class="form-actions" id="short-story-step-5-actions" style="display: none;">
+                            <button type="button" class="btn" onclick="exportShortStory()">📥 导出小说</button>
+                            <button type="button" class="btn btn-primary" onclick="resetShortStory()">🔄 重新创作</button>
                         </div>
                     </div>
                 </div>
@@ -612,18 +838,21 @@
                                 <div class="form-group">
                                     <label>投稿标题（自动生成）</label>
                                     <textarea id="submission-title" rows="2" readonly></textarea>
-                                    <button type="button" class="btn btn-sm btn-secondary" onclick="copySubmissionTitle()">复制标题</button>
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                        onclick="copySubmissionTitle()">复制标题</button>
                                 </div>
 
                                 <div class="form-group">
                                     <label>邮件导语（自动生成）</label>
                                     <textarea id="submission-intro" rows="5" readonly></textarea>
-                                    <button type="button" class="btn btn-sm btn-secondary" onclick="copySubmissionIntro()">复制导语</button>
+                                    <button type="button" class="btn btn-sm btn-secondary"
+                                        onclick="copySubmissionIntro()">复制导语</button>
                                 </div>
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="closeSubmissionModal()">取消</button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeSubmissionModal()">取消</button>
                                 <button type="submit" class="btn btn-primary">保存</button>
                             </div>
                         </form>
@@ -652,7 +881,8 @@
 
                                 <div class="form-group">
                                     <label>描述</label>
-                                    <textarea id="channel-agent-description" rows="2" placeholder="描述这个智能体的用途..."></textarea>
+                                    <textarea id="channel-agent-description" rows="2"
+                                        placeholder="描述这个智能体的用途..."></textarea>
                                 </div>
 
                                 <div class="form-row">
@@ -680,7 +910,8 @@
                                 <h4>🎯 渠道特点</h4>
                                 <div class="form-group">
                                     <label>擅长话题</label>
-                                    <textarea id="channel-agent-topics" rows="2" placeholder="例如：亲密关系,情感问题,婚姻经营,自我成长"></textarea>
+                                    <textarea id="channel-agent-topics" rows="2"
+                                        placeholder="例如：亲密关系,情感问题,婚姻经营,自我成长"></textarea>
                                 </div>
 
                                 <div class="form-group">
@@ -698,12 +929,14 @@
 
                                 <div class="form-group">
                                     <label>特殊要求</label>
-                                    <textarea id="channel-agent-requirements" rows="2" placeholder="例如：需要有真实案例,避免说教..."></textarea>
+                                    <textarea id="channel-agent-requirements" rows="2"
+                                        placeholder="例如：需要有真实案例,避免说教..."></textarea>
                                 </div>
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="closeChannelAgentModal()">取消</button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeChannelAgentModal()">取消</button>
                                 <button type="submit" class="btn btn-primary">保存</button>
                             </div>
                         </form>
@@ -730,7 +963,8 @@
                             <div class="form-group">
                                 <label>上传语料文件 (.txt / .md)</label>
                                 <div class="file-upload-area" id="corpus-drop-zone">
-                                    <input type="file" id="corpus-files" accept=".txt,.md,text/markdown,text/plain" multiple style="display: none;">
+                                    <input type="file" id="corpus-files" accept=".txt,.md,text/markdown,text/plain"
+                                        multiple style="display: none;">
                                     <div class="upload-prompt">
                                         <p>📁 拖拽文件到此处或点击上传</p>
                                         <p class="upload-hint">支持多个.txt和.md文件，建议上传10-50篇该渠道的范文</p>
@@ -740,7 +974,8 @@
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="closeCorpusUploadModal()">取消</button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeCorpusUploadModal()">取消</button>
                                 <button type="submit" class="btn btn-primary">开始训练</button>
                             </div>
                         </form>
@@ -766,8 +1001,10 @@
 
                             <div class="form-group">
                                 <label>文章主题（可选）</label>
-                                <textarea id="generate-topic" rows="2" placeholder="留空则由AI根据渠道风格自主推荐主题，也可以输入你想写的主题"></textarea>
-                                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">💡 建议留空，让AI根据该渠道的风格自主创作更合适的主题</p>
+                                <textarea id="generate-topic" rows="2"
+                                    placeholder="留空则由AI根据渠道风格自主推荐主题，也可以输入你想写的主题"></textarea>
+                                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">💡
+                                    建议留空，让AI根据该渠道的风格自主创作更合适的主题</p>
                             </div>
 
                             <div class="form-row">
@@ -786,38 +1023,49 @@
                             </div>
 
                             <!-- 新建项目表单（默认隐藏） -->
-                            <div id="new-project-form" style="display: none; background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #0ea5e9;">
+                            <div id="new-project-form"
+                                style="display: none; background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #0ea5e9;">
                                 <div class="form-group">
                                     <label>新项目名称 <span class="required">*</span></label>
-                                    <input type="text" id="new-project-name" placeholder="输入新项目名称" style="background: white;">
+                                    <input type="text" id="new-project-name" placeholder="输入新项目名称"
+                                        style="background: white;">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label>额外要求</label>
-                                <textarea id="generate-requirements" rows="2" placeholder="例如：需要包含具体的对话场景，要有反转..."></textarea>
+                                <textarea id="generate-requirements" rows="2"
+                                    placeholder="例如：需要包含具体的对话场景，要有反转..."></textarea>
                             </div>
 
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()">取消</button>
-                                <button type="button" class="btn btn-info" onclick="generateInspiration()" id="generate-inspiration-btn">💡 AI生成灵感</button>
-                                <button type="button" class="btn btn-success" onclick="generateContent()" id="generate-content-btn" disabled>✍️ AI生成内容</button>
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeGenerateModal()">取消</button>
+                                <button type="button" class="btn btn-info" onclick="generateInspiration()"
+                                    id="generate-inspiration-btn">💡 AI生成灵感</button>
+                                <button type="button" class="btn btn-success" onclick="generateContent()"
+                                    id="generate-content-btn" disabled>✍️ AI生成内容</button>
                             </div>
                         </form>
 
                         <!-- 灵感编辑区域 -->
                         <div id="inspiration-editor" style="display: none; margin-top: 1.5rem;">
-                            <div class="form-section" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #0ea5e9;">
+                            <div class="form-section"
+                                style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #0ea5e9;">
                                 <h4 style="margin: 0 0 1rem 0; color: #0369a1;">💡 AI生成的灵感</h4>
 
                                 <div class="form-group">
                                     <label>推荐主题</label>
-                                    <div id="inspiration-topic" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #f59e0b; font-weight: 500; color: #92400e;"></div>
+                                    <div id="inspiration-topic"
+                                        style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #f59e0b; font-weight: 500; color: #92400e;">
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label>标题建议</label>
-                                    <div id="inspiration-titles" style="background: white; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;"></div>
+                                    <div id="inspiration-titles"
+                                        style="background: white; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
@@ -846,32 +1094,45 @@
                                 </div>
 
                                 <div class="form-actions" style="margin-top: 1rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="regenerateInspiration()">🔄 重新生成灵感</button>
-                                    <button type="button" class="btn btn-success" onclick="confirmInspiration()">✅ 确认并生成内容</button>
+                                    <button type="button" class="btn btn-secondary" onclick="regenerateInspiration()">🔄
+                                        重新生成灵感</button>
+                                    <button type="button" class="btn btn-success" onclick="confirmInspiration()">✅
+                                        确认并生成内容</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 生成进度提示 -->
-                        <div id="generation-progress" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; text-align: center;">
+                        <div id="generation-progress"
+                            style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; text-align: center;">
                             <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">✨</div>
                             <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;" id="progress-title">AI正在创作中...</h4>
-                            <p style="margin: 0.5rem 0; opacity: 0.9; font-size: 0.9rem;" id="generation-progress-text">正在分析主题和风格要求</p>
-                            <div style="margin-top: 1rem; background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
-                                <div id="generation-progress-bar" style="height: 100%; background: white; border-radius: 3px; transition: width 0.5s ease; width: 0%;"></div>
+                            <p style="margin: 0.5rem 0; opacity: 0.9; font-size: 0.9rem;" id="generation-progress-text">
+                                正在分析主题和风格要求</p>
+                            <div
+                                style="margin-top: 1rem; background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div id="generation-progress-bar"
+                                    style="height: 100%; background: white; border-radius: 3px; transition: width 0.5s ease; width: 0%;">
+                                </div>
                             </div>
-                            <p style="margin: 0.8rem 0 0 0; opacity: 0.8; font-size: 0.85rem;" id="progress-time">预计需要 30-60 秒，请稍候...</p>
+                            <p style="margin: 0.8rem 0 0 0; opacity: 0.8; font-size: 0.85rem;" id="progress-time">预计需要
+                                30-60 秒，请稍候...</p>
                         </div>
 
                         <!-- 生成结果 -->
                         <div id="generation-result" style="display: none; margin-top: 1.5rem;">
                             <div class="form-section">
                                 <h4>📝 生成内容</h4>
-                                <div id="generated-content-display" style="background: #f8fafc; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.8;"></div>
+                                <div id="generated-content-display"
+                                    style="background: #f8fafc; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.8;">
+                                </div>
                                 <div class="form-actions" style="margin-top: 1rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="copyGeneratedContent()">📋 复制内容</button>
-                                    <button type="button" class="btn btn-primary" onclick="saveToProject()">💾 保存到项目</button>
-                                    <button type="button" class="btn btn-secondary" onclick="regenerateContent()">🔄 重新生成</button>
+                                    <button type="button" class="btn btn-secondary" onclick="copyGeneratedContent()">📋
+                                        复制内容</button>
+                                    <button type="button" class="btn btn-primary" onclick="saveToProject()">💾
+                                        保存到项目</button>
+                                    <button type="button" class="btn btn-secondary" onclick="regenerateContent()">🔄
+                                        重新生成</button>
                                 </div>
                             </div>
                         </div>
@@ -933,10 +1194,13 @@
                                 <button class="btn btn-sm btn-secondary" onclick="fetchFromUrl()">从链接获取</button>
                             </div>
 
-                            <div id="url-input-section" style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
-                                <input type="text" id="example-url" placeholder="粘贴例文链接..." style="width: 70%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <div id="url-input-section"
+                                style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
+                                <input type="text" id="example-url" placeholder="粘贴例文链接..."
+                                    style="width: 70%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
                                 <button class="btn btn-primary" onclick="fetchContentFromUrl()">获取内容</button>
-                                <button class="btn btn-secondary" onclick="document.getElementById('url-input-section').style.display='none'">取消</button>
+                                <button class="btn btn-secondary"
+                                    onclick="document.getElementById('url-input-section').style.display='none'">取消</button>
                             </div>
 
                             <div class="form-group">
@@ -946,7 +1210,8 @@
 
                             <div class="form-group">
                                 <label>例文内容</label>
-                                <textarea id="example-content" rows="25" placeholder="粘贴例文内容，或点击上方按钮从链接获取..."></textarea>
+                                <textarea id="example-content" rows="25"
+                                    placeholder="粘贴例文内容，或点击上方按钮从链接获取..."></textarea>
                             </div>
 
                             <div style="margin-top: 1rem;">
@@ -968,7 +1233,8 @@
                                         <span class="section-number">1</span>
                                         📖 文章名称
                                     </h4>
-                                    <textarea id="analysis-title-field" rows="2" placeholder="这篇文章的正式名称是什么？如果原标题不够吸引人，你会怎么重新命名？"></textarea>
+                                    <textarea id="analysis-title-field" rows="2"
+                                        placeholder="这篇文章的正式名称是什么？如果原标题不够吸引人，你会怎么重新命名？"></textarea>
                                     <div class="section-hint">💡 提示：好的标题能吸引读者，包含冲突元素和悬念</div>
                                 </div>
 
@@ -977,7 +1243,8 @@
                                         <span class="section-number">2</span>
                                         ⚔️ 核心冲突
                                     </h4>
-                                    <textarea id="core-conflict-field" rows="4" placeholder="这篇文章的核心冲突是什么？主要的对立面是谁？冲突的根源是什么？"></textarea>
+                                    <textarea id="core-conflict-field" rows="4"
+                                        placeholder="这篇文章的核心冲突是什么？主要的对立面是谁？冲突的根源是什么？"></textarea>
                                     <div class="section-hint">💡 提示：冲突是故事的引擎，明确矛盾双方和冲突本质</div>
                                 </div>
 
@@ -986,7 +1253,8 @@
                                         <span class="section-number">3</span>
                                         🤫 信息差
                                     </h4>
-                                    <textarea id="information-gap-field" rows="4" placeholder="哪些信息在谁之间被隐瞒？信息差如何推动剧情？信息差的揭露时机和方式？"></textarea>
+                                    <textarea id="information-gap-field" rows="4"
+                                        placeholder="哪些信息在谁之间被隐瞒？信息差如何推动剧情？信息差的揭露时机和方式？"></textarea>
                                     <div class="section-hint">💡 提示：信息差制造悬念，揭示真相创造高潮</div>
                                 </div>
 
@@ -995,7 +1263,8 @@
                                         <span class="section-number">4</span>
                                         🎯 核心任务
                                     </h4>
-                                    <textarea id="core-task-field" rows="3" placeholder="主角或关键人物要达成什么目标？任务的紧迫性和重要性是什么？"></textarea>
+                                    <textarea id="core-task-field" rows="3"
+                                        placeholder="主角或关键人物要达成什么目标？任务的紧迫性和重要性是什么？"></textarea>
                                     <div class="section-hint">💡 提示：目标驱动行动，紧迫性制造张力</div>
                                 </div>
 
@@ -1004,7 +1273,8 @@
                                         <span class="section-number">5</span>
                                         👥 人设分析
                                     </h4>
-                                    <textarea id="character-profile-field" rows="5" placeholder="主要角色的性格特点、核心动机、关键行为和内心秘密是什么？"></textarea>
+                                    <textarea id="character-profile-field" rows="5"
+                                        placeholder="主要角色的性格特点、核心动机、关键行为和内心秘密是什么？"></textarea>
                                     <div class="section-hint">💡 提示：立体的人设包含外在性格和内在动机的冲突</div>
                                 </div>
 
@@ -1082,7 +1352,8 @@
                 </div>
                 <div class="modal-body">
                     <!-- AI生成选项 -->
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
+                    <div
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
                         <h4 style="margin-bottom: 1rem;">✨ AI全自动生成设定（推荐）</h4>
                         <p style="margin-bottom: 1rem; font-size: 0.9rem; opacity: 0.9;">AI将为您生成一套完整且独特的小说设定，包括：</p>
                         <ul style="margin-bottom: 1rem; padding-left: 1.5rem; font-size: 0.875rem; opacity: 0.9;">
@@ -1091,17 +1362,22 @@
                             <li>惊人的秘密和反转</li>
                             <li>完整的章节大纲</li>
                         </ul>
-                        <button type="button" class="btn" style="background: white; color: #667eea; font-weight: 600;" onclick="aiGenerateFullProject()">
+                        <button type="button" class="btn" style="background: white; color: #667eea; font-weight: 600;"
+                            onclick="aiGenerateFullProject()">
                             🎲 AI生成全套设定
                         </button>
-                        <div id="ai-generating-status" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 0.875rem;">
+                        <div id="ai-generating-status"
+                            style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 0.875rem;">
                             🤖 AI正在疯狂构思中，请稍候...
                         </div>
                     </div>
 
                     <div style="text-align: center; margin: 1.5rem 0; position: relative;">
-                        <span style="background: var(--surface); padding: 0 1rem; color: var(--text-secondary); z-index: 1; position: relative;">或者手动填写</span>
-                        <div style="position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--border); z-index: 0;"></div>
+                        <span
+                            style="background: var(--surface); padding: 0 1rem; color: var(--text-secondary); z-index: 1; position: relative;">或者手动填写</span>
+                        <div
+                            style="position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--border); z-index: 0;">
+                        </div>
                     </div>
 
                     <form id="create-project-form">
@@ -1139,7 +1415,8 @@
                             <textarea id="project-core-task" rows="2" placeholder="主角要达成什么目标？"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('create-project-modal')">取消</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="closeModal('create-project-modal')">取消</button>
                             <button type="submit" class="btn btn-primary">创建</button>
                         </div>
                     </form>
@@ -1157,8 +1434,10 @@
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div id="ai-preview-content"></div>
                     <div class="form-actions" style="margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('ai-preview-modal')">取消</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmCreateProject()">✅ 确认并创建项目</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('ai-preview-modal')">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="confirmCreateProject()">✅
+                            确认并创建项目</button>
                     </div>
                 </div>
             </div>
@@ -1200,7 +1479,8 @@
                             </div>
                             <div class="form-group">
                                 <label>⚡ 核心身份（一句话）</label>
-                                <textarea id="char-core-identity" rows="1" required placeholder="例如：现代程序员穿越到古代的书生"></textarea>
+                                <textarea id="char-core-identity" rows="1" required
+                                    placeholder="例如：现代程序员穿越到古代的书生"></textarea>
                                 <small class="text-muted">用一句话描述角色的本质身份</small>
                             </div>
                             <div class="form-group">
@@ -1210,7 +1490,8 @@
                             </div>
                             <div class="form-group">
                                 <label>⚡ 核心动机（一句话）</label>
-                                <textarea id="char-core-motivation" rows="1" required placeholder="例如：利用现代知识改变古代科技落后"></textarea>
+                                <textarea id="char-core-motivation" rows="1" required
+                                    placeholder="例如：利用现代知识改变古代科技落后"></textarea>
                                 <small class="text-muted">驱动角色行动的核心动力</small>
                             </div>
                         </div>
@@ -1224,7 +1505,8 @@
                             </div>
                             <div class="form-group">
                                 <label>缺陷带来的后果</label>
-                                <textarea id="char-flaw-consequence" rows="2" placeholder="例如：在官场屡屡碰壁，但也因此结交了一些真正赏识他的朋友"></textarea>
+                                <textarea id="char-flaw-consequence" rows="2"
+                                    placeholder="例如：在官场屡屡碰壁，但也因此结交了一些真正赏识他的朋友"></textarea>
                                 <small class="text-muted">这个缺陷如何影响剧情发展</small>
                             </div>
                         </div>
@@ -1282,7 +1564,8 @@
                             </div>
                             <div class="form-group">
                                 <label>关系补充</label>
-                                <textarea id="char-relationship-notes" rows="2" placeholder="临时关系信息，优先级高于固定设定"></textarea>
+                                <textarea id="char-relationship-notes" rows="2"
+                                    placeholder="临时关系信息，优先级高于固定设定"></textarea>
                             </div>
                         </div>
 
@@ -1294,7 +1577,8 @@
                         <input type="hidden" id="char-motivation" value="">
 
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('create-character-modal')">取消</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="closeModal('create-character-modal')">取消</button>
                             <button type="submit" class="btn btn-primary">创建角色卡</button>
                         </div>
                     </form>
@@ -1332,7 +1616,8 @@
                             <textarea id="gen-char-reference" rows="2" placeholder="例如：像《知否》里的林小娘一样表面温柔"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('generate-character-modal')">取消</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="closeModal('generate-character-modal')">取消</button>
                             <button type="submit" class="btn btn-primary">✨ AI生成</button>
                         </div>
                     </form>
@@ -1365,7 +1650,8 @@
                         </div>
                         <div class="form-group">
                             <label>情节要点（每行一个）</label>
-                            <textarea id="outline-points" rows="5" placeholder="例如：&#10;主角在书房发现文件&#10;文件显示财产已被转移&#10;主角质问二舅"></textarea>
+                            <textarea id="outline-points" rows="5"
+                                placeholder="例如：&#10;主角在书房发现文件&#10;文件显示财产已被转移&#10;主角质问二舅"></textarea>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -1390,7 +1676,8 @@
                             <textarea id="outline-notes" rows="2"></textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal('create-outline-modal')">取消</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="closeModal('create-outline-modal')">取消</button>
                             <button type="submit" class="btn btn-primary">创建</button>
                         </div>
                     </form>
@@ -1413,7 +1700,8 @@
                 <form id="agent-execute-form">
                     <div id="agent-variables-container"></div>
                     <div class="form-actions" style="margin-top: 1.5rem;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('agent-execute-modal')">取消</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('agent-execute-modal')">取消</button>
                         <button type="submit" class="btn btn-primary">🚀 开始生成</button>
                     </div>
                 </form>
@@ -1473,7 +1761,8 @@
                         <!-- 方式1：点击选择 -->
                         <div class="upload-methods">
                             <div class="upload-method">
-                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('material-file').click()">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="document.getElementById('material-file').click()">
                                     📁 选择多个文件
                                 </button>
                                 <button type="button" class="btn btn-secondary" onclick="showFolderUploadHelp()">
@@ -1482,7 +1771,8 @@
                             </div>
                         </div>
 
-                        <input type="file" id="material-file" required accept=".txt,.docx,.doc,.pdf,.xlsx,.xls" multiple class="form-control" style="display: none;">
+                        <input type="file" id="material-file" required accept=".txt,.docx,.doc,.pdf,.xlsx,.xls" multiple
+                            class="form-control" style="display: none;">
 
                         <!-- 拖拽上传区域 -->
                         <div id="drop-zone" class="drop-zone">
@@ -1497,7 +1787,8 @@
                         <div id="selected-files-list" class="selected-files-list" style="display: none;">
                             <div class="files-list-header">
                                 <h4>已选择 <span id="file-count">0</span> 个文件</h4>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="clearSelectedFiles()">清空</button>
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                    onclick="clearSelectedFiles()">清空</button>
                             </div>
                             <div id="files-preview" class="files-preview"></div>
                         </div>
@@ -1515,7 +1806,8 @@
                         <textarea id="material-notes" class="form-control" rows="2"></textarea>
                     </div>
                     <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('upload-material-modal')">取消</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('upload-material-modal')">取消</button>
                         <button type="submit" class="btn btn-primary">上传并分析</button>
                     </div>
                 </form>
@@ -1545,7 +1837,9 @@
     <script src="/static/js/collaborative.js?v=9"></script>
     <script src="/static/js/agents.js?v=1"></script>
     <script src="/static/js/materials.js?v=1"></script>
-    <script src="/static/js/inspiration.js?v=1705020200"></script>
+    <script src="/static/js/inspiration.js?v=1705021000"></script>
+    <script src="/static/js/short-story.js?v=1"></script>
     <script src="/static/js/channel-agents.js?v=9"></script>
 </body>
+
 </html>

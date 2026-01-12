@@ -104,29 +104,30 @@ async function generateInpiration() {
 
         const result = await response.json();
 
-        inspirationData.step2 = result.data;
-        displaySettings(result.data);
-        document.getElementById('step-2-actions').style.display = 'flex';
-        return true;
-    } else {
-        settingsContent.innerHTML = `
+        if (result.success) {
+            inspirationData.step2 = result.data;
+            displaySettings(result.data);
+            document.getElementById('step-2-actions').style.display = 'flex';
+            return true;
+        } else {
+            settingsContent.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
                     <p>❌ 生成失败: ${result.message || '未知错误'}</p>
                     <button class="btn btn-primary" onclick="goToStep(1)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
-        return false;
-    }
-} catch (error) {
-    console.error('生成设定失败:', error);
-    settingsContent.innerHTML = `
+            return false;
+        }
+    } catch (error) {
+        console.error('生成设定失败:', error);
+        settingsContent.innerHTML = `
             <div class="loading-state" style="color: var(--danger-color);">
                 <p>❌ 生成失败: ${error.message}</p>
                 <button class="btn btn-primary" onclick="goToStep(1)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
-    return false;
-}
+        return false;
+    }
 }
 
 // 显示生成的设定(增强版)
@@ -294,6 +295,10 @@ async function generateOutline() {
     `;
 
     try {
+        // 创建超时控制器
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10分钟超时
+
         const response = await fetch('/api/inspiration/generate-outline', {
             method: 'POST',
             headers: {
@@ -301,8 +306,11 @@ async function generateOutline() {
             },
             body: JSON.stringify({
                 settings: inspirationData.step2
-            })
+            }),
+            signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         const result = await response.json();
 
