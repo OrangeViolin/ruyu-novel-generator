@@ -113,7 +113,7 @@ function startMonitoringProject(projectId) {
     }
 
     let checkCount = 0;
-    const maxChecks = 60; // 最多检查60次（3分钟）
+    const maxChecks = 400; // 最多检查400次（20分钟）
 
     monitoringInterval = setInterval(async () => {
         checkCount++;

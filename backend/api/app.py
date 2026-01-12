@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import concurrent.futures
 from sqlalchemy import func
 from contextlib import contextmanager
 import sys
@@ -3504,8 +3505,9 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
 
         print(f"开始生成 {len(chapters)} 个章节...")
 
-        for idx, chapter_outline in enumerate(chapters):
-            chapter_num = chapter_outline.get('chapter_number', 1)
+        # 定义单章生成函数
+        def generate_single_chapter_task(idx, chapter_outline):
+            chapter_num = chapter_outline.get('chapter_number', idx + 1)
             title = chapter_outline.get('title', f'第{chapter_num}章')
             summary = chapter_outline.get('summary', '')
             plot_points = chapter_outline.get('plot_points', [])
@@ -3552,21 +3554,48 @@ async def generate_inspiration_chapters(request: ChaptersRequest):
 
                 print(f"第 {idx+1} 章生成完成，内容长度: {len(chapter_content)}")
 
-                generated_chapters.append({
+                return {
                     "chapter_number": chapter_num,
                     "title": title,
                     "summary": summary,
                     "content": chapter_content,
                     "word_count": len(chapter_content),
                     "plot_points": plot_points,
-                    "characters": characters_involved
-                })
+                    "characters": characters_involved,
+                    "index": idx  # 用于排序
+                }
             except Exception as e:
                 print(f"第 {idx+1} 章生成失败: {e}")
                 import traceback
                 traceback.print_exc()
-                # 继续生成下一章，不要中断整个流程
-                continue
+                # 返回失败信息，不抛出异常以免影响其他线程
+                return None
+
+        # 并行生成
+        print(f"开始并行生成 {len(chapters)} 个章节...")
+        generated_chapters = []
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # 提交所有任务
+            future_to_idx = {
+                executor.submit(generate_single_chapter_task, idx, ch): idx 
+                for idx, ch in enumerate(chapters)
+            }
+            
+            # 收集结果
+            results = []
+            for future in concurrent.futures.as_completed(future_to_idx):
+                result = future.result()
+                if result:
+                    results.append(result)
+            
+            # 按原始顺序排序
+            results.sort(key=lambda x: x["index"])
+            
+            # 移除index字段并添加到最终列表
+            for res in results:
+                del res["index"]
+                generated_chapters.append(res)
 
         print(f"章节生成完成，成功生成 {len(generated_chapters)}/{len(chapters)} 章")
 
@@ -3640,6 +3669,80 @@ async def generate_inspiration_novel(request: NovelRequest):
         # 更新项目
         project.chapters = chapters
         project.word_count = total_words
+        db.commit()
+
+        # ==========================================
+        # 核心逻辑修复：填充规范化数据库表
+        # ==========================================
+        
+        # 1. 创建角色表数据
+        for char in settings.get('characters', []):
+            try:
+                character = Character(
+                    project_id=project.id,
+                    name=char.get('name', '未命名'),
+                    role_type=char.get('role_type', 'supporting'),
+                    importance='core' if char.get('role_type') == 'protagonist' else 'important',
+                    core_identity=char.get('core_identity'),
+                    core_personality=char.get('core_personality'),
+                    core_motivation=char.get('core_motivation'),
+                    personality_flaw=char.get('personality_flaw'),
+                    flaw_consequence=char.get('flaw_consequence'),
+                    growth_direction=char.get('growth_direction'),
+                    source="ai_generated"
+                )
+                db.add(character)
+            except Exception as e:
+                print(f"创建角色失败: {e}")
+        
+        # 2. 创建大纲和章节草稿
+        for idx, ch in enumerate(chapters_data.get('chapters', [])):
+            try:
+                # 匹配大纲信息 (尝试从outline中找对应章节)
+                outline_info = {}
+                for out_ch in outline.get('chapters', []):
+                    if out_ch.get('chapter_number') == ch.get('chapter_number'):
+                        outline_info = out_ch
+                        break
+                
+                # 创建大纲记录
+                plot_outline = PlotOutline(
+                    project_id=project.id,
+                    level="chapter",
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    summary=ch.get('summary', '') or outline_info.get('summary', ''),
+                    plot_points=outline_info.get('plot_points', []),
+                    target_words=outline_info.get('target_words', 3000),
+                    focus_elements=[],
+                    emotion_arc=f"{outline_info.get('emotion_type', '')} {outline_info.get('emotion_intensity', '')}",
+                    characters_involved=outline_info.get('characters', []),
+                    source="ai_generated",
+                    status="generated",
+                    order=ch.get('chapter_number', idx + 1)
+                )
+                db.add(plot_outline)
+                db.flush() # 获取ID
+                
+                # 创建章节草稿
+                chapter_draft = ChapterDraft(
+                    project_id=project.id,
+                    outline_id=plot_outline.id,
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    content=ch.get('content', ''),
+                    word_count=ch.get('word_count', 0),
+                    status="completed",
+                    edit_count=0,
+                    ai_revision_count=1,
+                    human_ai_ratio="0:100",
+                    generation_params={"source": "inspiration_assistant"}
+                )
+                db.add(chapter_draft)
+                
+            except Exception as e:
+                print(f"创建章节数据失败 (章节 {idx+1}): {e}")
+        
         db.commit()
 
         return {

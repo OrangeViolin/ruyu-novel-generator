@@ -10,9 +10,10 @@ let inspirationData = {
 };
 
 let inspirationCurrentStep = 1;
+let isOneClickMode = false;
 
 // 初始化
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('创作灵感助手初始化完成');
 });
 
@@ -103,27 +104,29 @@ async function generateInpiration() {
 
         const result = await response.json();
 
-        if (result.success) {
-            inspirationData.step2 = result.data;
-            displaySettings(result.data);
-            document.getElementById('step-2-actions').style.display = 'flex';
-        } else {
-            settingsContent.innerHTML = `
+        inspirationData.step2 = result.data;
+        displaySettings(result.data);
+        document.getElementById('step-2-actions').style.display = 'flex';
+        return true;
+    } else {
+        settingsContent.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
                     <p>❌ 生成失败: ${result.message || '未知错误'}</p>
                     <button class="btn btn-primary" onclick="goToStep(1)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
-        }
-    } catch (error) {
-        console.error('生成设定失败:', error);
-        settingsContent.innerHTML = `
+        return false;
+    }
+} catch (error) {
+    console.error('生成设定失败:', error);
+    settingsContent.innerHTML = `
             <div class="loading-state" style="color: var(--danger-color);">
                 <p>❌ 生成失败: ${error.message}</p>
                 <button class="btn btn-primary" onclick="goToStep(1)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
-    }
+    return false;
+}
 }
 
 // 显示生成的设定(增强版)
@@ -232,7 +235,7 @@ function displaySettings(data) {
     if (data.characters && data.characters.length > 0) {
         data.characters.forEach(char => {
             const roleLabel = char.role_type === 'protagonist' ? '主角' :
-                             char.role_type === 'antagonist' ? '反派' : '配角';
+                char.role_type === 'antagonist' ? '反派' : '配角';
             html += `
                 <div class="character-card ${char.role_type}">
                     <h5>${escapeHtml(char.name || '未命名')}</h5>
@@ -328,6 +331,7 @@ async function generateOutline() {
                 inspirationData.step3 = result.data;
                 displayOutline(result.data);
                 document.getElementById('step-3-actions').style.display = 'flex';
+                return true;
             }
         } else {
             outlineContent.innerHTML = `
@@ -336,6 +340,7 @@ async function generateOutline() {
                     <button class="btn btn-primary" onclick="goToStep(2)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
+            return false;
         }
     } catch (error) {
         console.error('生成大纲失败:', error);
@@ -345,6 +350,7 @@ async function generateOutline() {
                 <button class="btn btn-primary" onclick="goToStep(2)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
+        return false;
     }
 }
 
@@ -558,6 +564,7 @@ async function generateChapters() {
             inspirationData.step4 = result.data;
             displayChapters(result.data);
             document.getElementById('step-4-actions').style.display = 'flex';
+            return true;
         } else {
             chaptersContent.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
@@ -565,6 +572,7 @@ async function generateChapters() {
                     <button class="btn btn-primary" onclick="goToStep(3)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
+            return false;
         }
     } catch (error) {
         console.error('生成章节失败:', error);
@@ -589,6 +597,7 @@ async function generateChapters() {
                 </div>
             `;
         }
+        return false;
     }
 }
 
@@ -654,6 +663,7 @@ async function generateNovel() {
             inspirationData.step5 = result.data;
             displayNovelResult(result.data);
             document.getElementById('step-5-actions').style.display = 'flex';
+            return true;
         } else {
             novelResult.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
@@ -661,6 +671,7 @@ async function generateNovel() {
                     <button class="btn btn-primary" onclick="goToStep(4)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
+            return false;
         }
     } catch (error) {
         console.error('一键成文失败:', error);
@@ -670,6 +681,64 @@ async function generateNovel() {
                 <button class="btn btn-primary" onclick="goToStep(4)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
+        return false;
+    }
+}
+
+// 一键生成全书流程
+async function startOneClickGeneration() {
+    isOneClickMode = true;
+    showToast('🚀 正在启动一键生成全书流程...', 'info');
+
+    // Step 1: 生成设定
+    const success1 = await generateInpiration(); // 注意：原函数名有拼写错误，保持一致
+    if (!success1) {
+        isOneClickMode = false;
+        showToast('❌ 设定生成失败，流程终止', 'error');
+        return;
+    }
+
+    // Auto-proceed to Step 2 -> 3
+    if (isOneClickMode) {
+        showToast('✅ 设定生成完成，正在自动开始生成大纲...', 'info');
+        // 加入一点延迟，让用户看清结果
+        setTimeout(async () => {
+            const success2 = await generateOutline();
+            if (!success2) {
+                isOneClickMode = false;
+                showToast('❌ 大纲生成失败，流程终止', 'error');
+                return;
+            }
+
+            // Auto-proceed to Step 3 -> 4
+            if (isOneClickMode) {
+                showToast('✅ 大纲生成完成，正在自动开始生成细章（可能需要几分钟）...', 'info');
+                setTimeout(async () => {
+                    const success3 = await generateChapters();
+                    if (!success3) {
+                        isOneClickMode = false;
+                        showToast('❌ 细章生成失败，流程终止', 'error');
+                        return;
+                    }
+
+                    // Auto-proceed to Step 4 -> 5
+                    if (isOneClickMode) {
+                        showToast('✅ 细章生成完成，正在自动整合成文...', 'info');
+                        setTimeout(async () => {
+                            const success4 = await generateNovel();
+                            if (!success4) {
+                                isOneClickMode = false;
+                                showToast('❌ 成文失败，流程终止', 'error');
+                                return;
+                            }
+
+                            isOneClickMode = false;
+                            showToast('🎉 一键生成全书完成！', 'success');
+                        }, 1000);
+                    }
+                }, 1000);
+            }
+        }, 1000);
     }
 }
 
