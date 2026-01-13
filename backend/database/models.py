@@ -581,3 +581,17 @@ class ChannelAgent(Base):
 
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
+
+
+class Manuscript(Base):
+    """稿件存储表 - 用于保存每次生成的版本及对应审稿建议"""
+    __tablename__ = 'manuscripts'
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer)  # 关联的项目ID
+    title = Column(String(200))   # 稿件标题
+    content = Column(JSON)        # 稿件正文 (可能是章节内容列表)
+    review_report = Column(Text)  # AI 审稿报告
+    grade = Column(String(10))    # AI 评级 (S, A, B, C)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now)

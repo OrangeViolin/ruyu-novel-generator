@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     deepseek_api_key: str
     deepseek_model: str = "deepseek-chat"
 
+    # 聚合API配置 (api.yyds168.net)
+    aggregator_api_key: str = ""
+    aggregator_base_url: str = "https://api.yyds168.net/v1"
+
     # InsightDoc PDF解析配置
     insightdoc_api_key: str = "sk-I2gEy8v5fgafApDDJzO2M2JLgKyOdbvmypHbYPb9yqvzKqYO"
     insightdoc_base_url: str = "https://insightdoc.memect.cn"

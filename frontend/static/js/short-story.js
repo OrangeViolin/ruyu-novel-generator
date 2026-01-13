@@ -6,7 +6,8 @@ let shortStoryData = {
     step2: {},  // AI生成的设定
     step3: {},  // AI生成的大纲
     step4: {},  // AI生成的章节
-    step5: {}   // 最终成文
+    step5: {},  // 最终成文
+    manuscriptId: null // 稿件ID
 };
 
 let shortStoryCurrentStep = 1;
@@ -37,6 +38,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // 步骤导航
 function goToShortStoryStep(stepNumber) {
+    // 如果是降级导航（点击已完成的步骤指示器），允许查看中间产物
+    if (stepNumber < shortStoryCurrentStep) {
+        // 允许查看，但不更改 shortStoryCurrentStep 除非是明确的后退
+        console.log(`正在查看已完成的步骤: ${stepNumber}`);
+    }
+
     // 获取短故事助手的步骤指示器
     const panel = document.getElementById('tab-short-story');
     if (!panel) return;
@@ -62,10 +69,22 @@ function goToShortStoryStep(stepNumber) {
             el.classList.add('completed');
         } else if (stepNum === stepNumber) {
             el.classList.add('active');
+        } else if (stepNum < Math.max(stepNumber, shortStoryCurrentStep)) {
+            // 已完成但非当前步骤
+            el.classList.add('completed');
         }
     });
 
-    shortStoryCurrentStep = stepNumber;
+    // 为所有已完成的步骤绑定点击事件
+    panel.querySelectorAll('.step-indicator .step').forEach(el => {
+        const stepNum = parseInt(el.dataset.step);
+        if (stepNum < shortStoryCurrentStep || el.classList.contains('completed')) {
+            el.style.cursor = 'pointer';
+            el.onclick = () => goToShortStoryStep(stepNum);
+        }
+    });
+
+    shortStoryCurrentStep = Math.max(shortStoryCurrentStep, stepNumber);
 }
 
 // 第一步: 生成设定
@@ -96,6 +115,8 @@ async function generateShortStorySettings(overriddenSummary = null) {
         targetWords: parseInt(targetWords),
         chapterCount: parseInt(chapterCount),
         tropes,
+        model_provider: document.getElementById('model-provider-select')?.value || 'deepseek',
+        model_name: null,
         timestamp: Date.now() // 防止缓存
     };
 
@@ -490,6 +511,7 @@ async function generateShortStoryNovel() {
 
         if (result.success) {
             shortStoryData.step5 = result.data;
+            shortStoryData.manuscriptId = result.data.manuscript_id;
             displayShortStoryResult(result.data);
             document.getElementById('short-story-step-5-actions').style.display = 'flex';
             return true;
@@ -634,7 +656,9 @@ async function startShortStoryReview() {
                 title: data.title,
                 intro: data.intro,
                 chapters: data.chapters,
-                settings: shortStoryData.step1
+                settings: shortStoryData.step1,
+                project_id: data.project_id,
+                manuscript_id: shortStoryData.manuscriptId
             })
         });
 
@@ -675,8 +699,59 @@ function displayShortStoryReview(data) {
         </div>
     `;
 
-    // 保存审稿报告以便重写时引用
+    // 保存审稿报告以便对照和重写时引用
     shortStoryData.lastReview = data.report;
+    shortStoryData.lastGrade = data.grade;
+}
+
+// 分屏对照预览相关函数
+function openManuscriptCompareView() {
+    const modal = document.getElementById('manuscript-review-modal');
+    if (!modal) return;
+
+    // 填充原文
+    const originalContainer = document.getElementById('manuscript-original-content');
+    let originalHtml = '';
+    const storyData = shortStoryData.step5;
+
+    if (storyData && storyData.chapters) {
+        storyData.chapters.forEach(ch => {
+            originalHtml += `<h5 style="color: var(--primary-color); margin: 1.5rem 0 0.8rem 0; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">${ch.title}</h5>`;
+            originalHtml += `<div>${ch.content}</div>`;
+        });
+    } else {
+        originalHtml = '<p>暂无原文数据</p>';
+    }
+    originalContainer.innerHTML = originalHtml;
+
+    // 填充审稿报告
+    const reviewContainer = document.getElementById('manuscript-review-content');
+    if (shortStoryData.lastReview) {
+        reviewContainer.innerHTML = renderSimpleMarkdown(shortStoryData.lastReview);
+    } else {
+        reviewContainer.innerHTML = '<p>暂无审稿报告，请先进行AI审稿</p>';
+    }
+
+    // 填充元信息
+    document.getElementById('manuscript-time').textContent = new Date().toLocaleString();
+    const gradeBadge = document.getElementById('manuscript-grade-badge');
+    gradeBadge.textContent = shortStoryData.lastGrade || '-';
+
+    // 评级颜色
+    const gradeColor = {
+        'S': '#f59e0b',
+        'A': '#10b981',
+        'B': '#3b82f6',
+        'C': '#ef4444'
+    }[shortStoryData.lastGrade] || '#6b7280';
+    gradeBadge.style.color = gradeColor;
+
+    modal.style.display = 'block';
+}
+
+function closeManuscriptReviewModal() {
+    const modal = document.getElementById('manuscript-review-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 // 简单的Markdown渲染器 (处理标题、加粗、列表、分割线)

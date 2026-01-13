@@ -20,9 +20,9 @@ from backend.database.models import (
     init_db, get_db, ExampleAnalysis, NovelProject, PlotModule, CrawlTask, Submission,
     Character, PlotOutline, ChapterDraft,
     Agent, AgentExecution, AgentVersion, AgentShare, ReferenceMaterial, WritingStyle,
-    ChannelAgent
+    ChannelAgent, Manuscript
 )
-from backend.ai.deepseek_client import DeepSeekClient
+from backend.ai.ai_factory import AIClientFactory
 from backend.generator.novel_builder import NovelBuilder
 from backend.generator.plot_assembler import PlotAssembler
 from backend.crawler.zhihu_crawler import ZhihuCrawler
@@ -94,11 +94,15 @@ class CachedStaticFiles(StaticFiles):
 app.mount("/static", CachedStaticFiles(directory="frontend/static"), name="static")
 
 # 初始化核心组件
-ai_client = DeepSeekClient(api_key=settings.deepseek_api_key, model=settings.deepseek_model)
+ai_client = AIClientFactory.get_client()
 plot_assembler = PlotAssembler()
 novel_builder = NovelBuilder(ai_client=ai_client, plot_assembler=plot_assembler)
 plot_extractor = PlotExtractor(ai_client=ai_client)
 emotion_analyzer = EmotionAnalyzer()
+
+def get_ai_client(provider: Optional[str] = None, model: Optional[str] = None):
+    """根据提供商和模型名称获取AI客户端"""
+    return AIClientFactory.get_client(provider or "deepseek", model)
 
 
 # ========== 数据库辅助函数 ==========
@@ -122,6 +126,8 @@ class GenerateNovelRequest(BaseModel):
     background: str = "港澳/金牌播报员"
     characters: Optional[Dict[str, Any]] = None
     target_words: int = 10000
+    model_provider: Optional[str] = "deepseek"
+    model_name: Optional[str] = None
 
 
 class CrawlRequest(BaseModel):
@@ -139,6 +145,8 @@ class PolishRequest(BaseModel):
     content: str
     focus: str = "情绪钩子"
     style: str = "港澳播报员口吻"
+    model_provider: Optional[str] = "deepseek"
+    model_name: Optional[str] = None
 
 
 class UpdateChapterRequest(BaseModel):
@@ -194,11 +202,19 @@ async def generate_novel(request: GenerateNovelRequest, background_tasks: Backgr
 
         # 后台生成
         project_id = project.id  # 保存项目ID
+        model_provider = request.model_provider
+        model_name = request.model_name
+        
         def generate_task():
             # 在后台任务中创建新的数据库会话
             task_db = next(get_db())
             try:
                 print(f"[生成任务] 项目 {project_id} 开始生成...")
+                
+                # 获取指定的AI客户端
+                current_ai_client = get_ai_client(model_provider, model_name)
+                # 更新builder的客户端
+                novel_builder.ai_client = current_ai_client
 
                 novel = novel_builder.build_novel(
                     theme=request.theme,
@@ -219,6 +235,21 @@ async def generate_novel(request: GenerateNovelRequest, background_tasks: Backgr
                     task_project.chapters = novel.get("chapters", [])
                     task_project.word_count = novel.get("total_words", 0)
                     task_project.updated_at = datetime.now()
+                    
+                    # 保存到稿件表 (Manuscript)
+                    try:
+                        manuscript = Manuscript(
+                            project_id=project_id,
+                            title=task_project.name,
+                            content=task_project.chapters,
+                            created_at=datetime.now(),
+                            updated_at=datetime.now()
+                        )
+                        task_db.add(manuscript)
+                        print(f"[生成任务] 项目 {project_id} 稿件记录已准备")
+                    except Exception as ms_err:
+                        print(f"保存稿件记录准备失败: {ms_err}")
+                        
                     task_db.commit()
                     print(f"[生成任务] 项目 {project_id} 已更新为完成状态")
                 else:
@@ -579,6 +610,8 @@ async def update_chapter(request: UpdateChapterRequest):
 async def polish_text(request: PolishRequest):
     """润色文本"""
     try:
+        current_ai_client = get_ai_client(request.model_provider, request.model_name)
+        novel_builder.ai_client = current_ai_client
         polished = novel_builder.polish_chapter(
             content=request.content,
             focus=request.focus,
@@ -3116,6 +3149,92 @@ async def generate_inspiration_settings(request: InspirationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/inspiration/bubbles")
+async def get_inspiration_bubbles():
+    """获取灵感气泡 - 生成小说的'灵魂' (主角身份+狗血设定)"""
+    try:
+        # 随机选择几种题材来增加多样性
+        genres = ["悬疑", "甜宠", "大女主", "脑洞", "末世", "复仇", "仙侠", "都市反转"]
+        import random
+        selected_genres = random.sample(genres, 5)
+        
+        prompt = f"""请为小说创作生成8条高能、独特、充满'灵魂'的灵感短句。
+每一条灵感都应该是小说的核心设定或'灵魂'，重点在于主角的独特身份、反差感极强的角色设定、或者是一个极其吸睛的剧情钩子。
+
+**题材参考范围:** {', '.join(selected_genres)}
+
+**要求:**
+1. 语言要极具冲击力，能瞬间勾起创作欲望。
+2. 每条长度控制在15-25个字。
+3. 要奇特、有意思、有情绪、有爽点。
+4. 参考格式 (不要照抄):
+   - 世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。
+   - 满级大佬重回新手村，发现全村都是自己当年的死对头。
+   - 联姻三年丈夫从未归家，原来他在家做我的贴身暗卫。
+
+请以JSON数组格式返回，不要有任何额外文字:
+```json
+[
+  "灵感1...",
+  "灵感2...", 
+  "..."
+]
+```
+"""
+
+        messages = [{"role": "user", "content": prompt}]
+        # 使用较低的temperature以保证稳定性，但也要有一定的创造性
+        response_content = ai_client._call_api(messages, temperature=0.9, timeout=60.0)
+        
+        # 解析JSON
+        try:
+            # 提取JSON部分
+            start_idx = response_content.find('[')
+            end_idx = response_content.rfind(']')
+            if start_idx != -1 and end_idx != -1:
+                json_str = response_content[start_idx:end_idx + 1]
+                inspirations = json.loads(json_str)
+            else:
+                # 备选解析逻辑
+                inspirations = parse_json_response(response_content)
+                if not isinstance(inspirations, list):
+                    inspirations = []
+        except Exception as e:
+            print(f"解析灵感气泡JSON失败: {e}")
+            inspirations = []
+
+        # 如果生成失败，返回一些保底数据
+        if not inspirations:
+            inspirations = [
+                "世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。",
+                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
+                "穿成虐文女主后，我把剧情全部改成了极简风：能动手绝不吵架。",
+                "满级火系异能者重生回末世前三天，她买下了全国最优秀的仓储避风港。",
+                "每天都能听到未来儿子的心声，他告诉我一定要离那个黑脸反派远一点。",
+                "说好的替嫁残疾大佬，谁知道新婚夜他突然站起来教我炼丹。",
+                "修仙大佬穿成内卷高考生，直接用聚灵阵在考场刷题。",
+                "本想安静做个纨绔王妃，却发现府里的影卫全是我的前世旧部。"
+            ]
+
+        return {
+            "success": True,
+            "data": inspirations
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # 发生错误时也返回保底数据，确保前端不崩溃
+        return {
+            "success": True,
+            "data": [
+                "世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。",
+                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
+                "穿成虐文女主后，我把剧情全部改成了极简风：能动手绝不吵架。"
+            ]
+        }
+
+
 @app.post("/api/inspiration/generate-outline")
 async def generate_inspiration_outline(request: OutlineRequest):
     """第二步: 生成章节大纲(增强版 - 包含动态节拍器、伏笔预埋、情感曲线)"""
@@ -3745,6 +3864,21 @@ async def generate_inspiration_novel(request: NovelRequest):
         
         db.commit()
 
+        # 保存到稿件表 (Manuscript)
+        try:
+            manuscript = Manuscript(
+                project_id=project.id,
+                title=project.name,
+                content=chapters,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            db.add(manuscript)
+            db.commit()
+            print(f"小说 {project.id} 稿件记录已保存")
+        except Exception as ms_err:
+            print(f"保存稿件记录失败: {ms_err}")
+
         return {
             "success": True,
             "data": {
@@ -3796,6 +3930,8 @@ class ShortStoryReviewRequest(BaseModel):
     intro: str
     chapters: List[Dict[str, Any]]
     settings: Dict[str, Any]
+    project_id: Optional[int] = None
+    manuscript_id: Optional[int] = None
 
 
 class ShortStoryRewriteRequest(BaseModel):
@@ -4186,6 +4322,23 @@ async def generate_short_story_novel(request: ShortStoryNovelRequest):
         
         db.commit()
         
+        # 保存到稿件表 (Manuscript)
+        try:
+            manuscript = Manuscript(
+                project_id=project.id,
+                title=project.name,
+                content=chapters,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            db.add(manuscript)
+            db.commit()
+            db.refresh(manuscript)
+            manuscript_id = manuscript.id
+        except Exception as e:
+            print(f"保存稿件记录失败: {e}")
+            manuscript_id = None
+        
         # 生成精彩导语
         try:
             intro_prompt = f"""请为这部短故事写一段精彩的推荐导语（Blurb）。
@@ -4213,6 +4366,7 @@ async def generate_short_story_novel(request: ShortStoryNovelRequest):
             "success": True,
             "data": {
                 "project_id": project.id,
+                "manuscript_id": manuscript_id,
                 "title": project.name,
                 "intro": intro_content,
                 "chapters": chapters,
@@ -4279,6 +4433,27 @@ async def review_short_story(request: ShortStoryReviewRequest):
         elif "**A**" in report or "评级：A" in report: grade = "A"
         elif "**C**" in report or "评级：C" in report: grade = "C"
         
+        # 如果提供了manuscript_id或project_id，保存审稿报告
+        try:
+            db = next(get_db())
+            if request.manuscript_id:
+                manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
+                if manuscript:
+                    manuscript.review_report = report
+                    manuscript.grade = grade
+                    manuscript.updated_at = datetime.now()
+                    db.commit()
+            elif request.project_id:
+                # 如果没有manuscript_id但有project_id，找到最新的一个稿件并更新
+                manuscript = db.query(Manuscript).filter(Manuscript.project_id == request.project_id).order_by(Manuscript.created_at.desc()).first()
+                if manuscript:
+                    manuscript.review_report = report
+                    manuscript.grade = grade
+                    manuscript.updated_at = datetime.now()
+                    db.commit()
+        except Exception as db_err:
+            print(f"保存审稿报告失败: {db_err}")
+
         return {"success": True, "data": {"report": report, "grade": grade}}
         
     except Exception as e:
@@ -4286,6 +4461,50 @@ async def review_short_story(request: ShortStoryReviewRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"审稿失败: {str(e)}")
 
+
+@app.get("/api/manuscripts/{project_id}")
+async def list_manuscripts(project_id: int):
+    """列出项目的所有稿件版本"""
+    try:
+        db = next(get_db())
+        manuscripts = db.query(Manuscript).filter(Manuscript.project_id == project_id).order_by(Manuscript.created_at.desc()).all()
+        return {
+            "success": True, 
+            "manuscripts": [
+                {
+                    "id": m.id,
+                    "title": m.title,
+                    "grade": m.grade,
+                    "created_at": m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                } for m in manuscripts
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/manuscript/{manuscript_id}")
+async def get_manuscript(manuscript_id: int):
+    """获取指定稿件的详细内容和审稿报告"""
+    try:
+        db = next(get_db())
+        m = db.query(Manuscript).filter(Manuscript.id == manuscript_id).first()
+        if not m:
+            raise HTTPException(status_code=404, detail="稿件未找到")
+        return {
+            "success": True,
+            "manuscript": {
+                "id": m.id,
+                "project_id": m.project_id,
+                "title": m.title,
+                "content": m.content,
+                "review_report": m.review_report,
+                "grade": m.grade,
+                "created_at": m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            }
+        }
+    except Exception as e:
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/short-story/rewrite")
 async def rewrite_short_story(request: ShortStoryRewriteRequest):

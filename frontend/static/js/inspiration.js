@@ -19,8 +19,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // 步骤导航
 function goToStep(stepNumber) {
+    // 获取当前助手的面板
+    const panel = document.getElementById('tab-generator');
+    if (!panel) return;
+
     // 隐藏所有步骤
-    document.querySelectorAll('.step-content').forEach(el => {
+    panel.querySelectorAll('.step-content').forEach(el => {
         el.classList.remove('active');
         el.style.display = 'none';
     });
@@ -33,17 +37,29 @@ function goToStep(stepNumber) {
     }
 
     // 更新步骤指示器
-    document.querySelectorAll('.step').forEach(el => {
+    panel.querySelectorAll('.step-indicator .step').forEach(el => {
         const stepNum = parseInt(el.dataset.step);
         el.classList.remove('active', 'completed');
         if (stepNum < stepNumber) {
             el.classList.add('completed');
         } else if (stepNum === stepNumber) {
             el.classList.add('active');
+        } else if (stepNum < Math.max(stepNumber, inspirationCurrentStep)) {
+            // 已完成但非当前步骤
+            el.classList.add('completed');
         }
     });
 
-    inspirationCurrentStep = stepNumber;
+    // 为所有已完成的步骤绑定点击事件
+    panel.querySelectorAll('.step-indicator .step').forEach(el => {
+        const stepNum = parseInt(el.dataset.step);
+        if (stepNum < inspirationCurrentStep || el.classList.contains('completed')) {
+            el.style.cursor = 'pointer';
+            el.onclick = () => goToStep(stepNum);
+        }
+    });
+
+    inspirationCurrentStep = Math.max(inspirationCurrentStep, stepNumber);
 }
 
 function backToStep(stepNumber) {
@@ -59,7 +75,9 @@ async function generateInpiration() {
         genre: document.getElementById('inspiration-genre').value,
         chapters: document.getElementById('inspiration-chapters').value,
         words: document.getElementById('inspiration-words').value,
-        elements: document.getElementById('inspiration-elements').value.trim()
+        elements: document.getElementById('inspiration-elements').value.trim(),
+        model_provider: document.getElementById('model-provider-select')?.value || 'deepseek',
+        model_name: null // 使用后台配置的默认模型
     };
 
     // 保存到全局状态

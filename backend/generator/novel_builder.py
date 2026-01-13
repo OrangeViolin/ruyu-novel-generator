@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from backend.ai.deepseek_client import DeepSeekClient
 import concurrent.futures
 from backend.generator.plot_assembler import PlotAssembler
@@ -10,7 +10,7 @@ class NovelBuilder:
 
     def __init__(
         self,
-        ai_client: DeepSeekClient,
+        ai_client: Any,
         plot_assembler: PlotAssembler,
         target_words: int = 10000
     ):

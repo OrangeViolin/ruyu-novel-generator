@@ -22,6 +22,26 @@
                 </div>
             </div>
             <div class="nav-links">
+                <div class="model-selector">
+                    <label for="model-provider-select">🤖 模型:</label>
+                    <select id="model-provider-select" class="nav-select">
+                        <option value="deepseek" selected>DeepSeek (官方)</option>
+                        <optgroup label="Claude (Aggregator)">
+                            <option value="claude-opus-4-5-thinking">Claude Opus 4.5</option>
+                            <option value="claude-sonnet-4-5">Claude Sonnet 4.5</option>
+                        </optgroup>
+                        <optgroup label="GPT (Aggregator)">
+                            <option value="gpt-4o">GPT-4o</option>
+                            <option value="gpt-5">GPT-5</option>
+                        </optgroup>
+                        <optgroup label="Gemini (Aggregator)">
+                            <option value="gemini-3.0-pro">Gemini 3.0 Pro</option>
+                        </optgroup>
+                        <optgroup label="Grok (Aggregator)">
+                            <option value="grok-4">Grok 4</option>
+                        </optgroup>
+                    </select>
+                </div>
                 <button class="nav-btn" data-tab="short-story">📝 短故事助手</button>
                 <button class="nav-btn" data-tab="inspiration">💡 创作灵感助手</button>
             </div>
@@ -501,6 +521,8 @@
 
                         <div class="form-actions" id="short-story-step-6-actions" style="display: none;">
                             <button type="button" class="btn" onclick="goToShortStoryStep(5)">← 查看原文</button>
+                            <button type="button" class="btn btn-info" onclick="openManuscriptCompareView()">📊
+                                深度对照预览</button>
                             <button type="button" class="btn btn-primary" onclick="showShortStoryRewriteModal()">✍️
                                 根据建议修改</button>
                             <button type="button" class="btn btn-success" onclick="exportShortStory()">📥 导出最终稿</button>
@@ -510,73 +532,6 @@
             </div>
 
 
-    </div>
-    <div class="stat-card">
-        <h4>核心冲突</h4>
-        <p id="overview-conflict">-</p>
-    </div>
-    <div class="stat-card">
-        <h4>人机比例</h4>
-        <p id="overview-ratio">-</p>
-    </div>
-    <div class="stat-card">
-        <h4>字数</h4>
-        <p><span id="overview-words">0</span> / <span id="overview-target">0</span></p>
-    </div>
-    </div>
-    </div>
-
-    <!-- 工作流程标签 -->
-    <div class="workflow-tabs">
-        <button class="workflow-tab active" data-step="characters">
-            <span class="step-number">1</span>
-            👥 人物设定
-        </button>
-        <button class="workflow-tab" data-step="outlines">
-            <span class="step-number">2</span>
-            📋 情节大纲
-        </button>
-        <button class="workflow-tab" data-step="chapters">
-            <span class="step-number">3</span>
-            📝 章节创作
-        </button>
-    </div>
-
-    <!-- 步骤1: 人物设定 -->
-    <div id="step-characters" class="workflow-step active">
-        <div class="step-header">
-            <h3>👥 人物设定</h3>
-            <div class="step-actions">
-                <button class="btn btn-secondary" onclick="showCreateCharacterModal()">+ 手动创建</button>
-                <button class="btn btn-primary" onclick="showGenerateCharacterModal()">✨ AI辅助生成</button>
-            </div>
-        </div>
-        <div id="characters-grid" class="characters-grid">
-            <p class="empty-state">请先选择一个项目，或创建新项目</p>
-        </div>
-    </div>
-
-    <!-- 步骤2: 情节大纲 -->
-    <div id="step-outlines" class="workflow-step" style="display: none;">
-        <div class="step-header">
-            <h3>📋 情节大纲</h3>
-            <div class="step-actions">
-                <button class="btn btn-primary" onclick="showCreateOutlineModal()">+ 新建大纲</button>
-            </div>
-        </div>
-        <div id="outlines-list" class="outlines-list">
-            <p class="empty-state">请先选择一个项目</p>
-        </div>
-    </div>
-
-    <!-- 步骤3: 章节创作 -->
-    <div id="step-chapters" class="workflow-step" style="display: none;">
-        <div class="step-header">
-            <h3>📝 章节创作</h3>
-        </div>
-        <div id="chapters-workspace" class="chapters-workspace">
-            <p class="empty-state">请先创建情节大纲</p>
-        </div>
     </div>
     </div>
     </div>
@@ -962,6 +917,60 @@
 
 
     </main>
+
+
+    <!-- 稿件审阅对照弹窗 (分屏版) -->
+    <div id="manuscript-review-modal" class="modal" style="display: none;">
+        <div class="modal-content"
+            style="max-width: 1200px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h3>📖 稿件深度审阅 - 对照视图</h3>
+                <button class="modal-close" onclick="closeManuscriptReviewModal()">✕</button>
+            </div>
+            <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; padding: 0;">
+                <div class="review-split-container" style="display: flex; width: 100%; height: 100%;">
+                    <!-- 左侧：原文 -->
+                    <div class="review-pane left-pane"
+                        style="flex: 1; overflow-y: auto; padding: 1.5rem; border-right: 1px solid var(--border-color); background: #fdfdfd;">
+                        <h4
+                            style="margin-bottom: 1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                            <span
+                                style="background: var(--primary-color); width: 4px; height: 16px; border-radius: 2px;"></span>
+                            小说正文原文
+                        </h4>
+                        <div id="manuscript-original-content"
+                            style="line-height: 1.8; font-size: 1rem; color: #334155; white-space: pre-wrap;">
+                            <!-- 这里加载正文内容 -->
+                        </div>
+                    </div>
+                    <!-- 右侧：审稿报告 -->
+                    <div class="review-pane right-pane"
+                        style="flex: 1; overflow-y: auto; padding: 1.5rem; background: #fffaf0;">
+                        <h4
+                            style="margin-bottom: 1rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                            <span style="background: #f59e0b; width: 4px; height: 16px; border-radius: 2px;"></span>
+                            AI 主编审稿报告
+                        </h4>
+                        <div id="manuscript-review-content" style="line-height: 1.6;">
+                            <!-- 这里加载审稿报告 (Markdown) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"
+                style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div class="manuscript-info" style="font-size: 0.85rem; color: var(--text-secondary);">
+                    <span>版本生成时间: <span id="manuscript-time">-</span></span>
+                    <span style="margin-left: 1rem;">评分: <span id="manuscript-grade-badge"
+                            style="font-weight: bold; color: #f59e0b;">-</span></span>
+                </div>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="closeManuscriptReviewModal()">关闭预览</button>
+                    <button class="btn btn-primary" onclick="showShortStoryRewriteModal()">✍️ 根据建议修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <!-- 短故事重写弹窗 -->

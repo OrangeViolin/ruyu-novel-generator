@@ -137,6 +137,8 @@ class QwenClient:
             for c in outline.get("characters", [])
         ])
 
+        context_part = f"【前文摘要】\n{context}\n" if context else ""
+        
         prompt = f"""
 请根据以下信息生成一个章节：
 
@@ -156,7 +158,7 @@ class QwenClient:
 - 情绪张力要强
 - 细节描写丰富
 
-{f"【前文摘要】\n{context}\n" if context else ""}
+{context_part}
 
 请直接生成章节内容，不要有说明文字，要自然流畅。
 """
