@@ -114,10 +114,12 @@ async function generateShortStorySettings(overriddenSummary = null) {
         summary,
         targetWords: parseInt(targetWords),
         chapterCount: parseInt(chapterCount),
+        chapterCount: parseInt(chapterCount),
         tropes,
         model_provider: document.getElementById('model-provider-select')?.value || 'deepseek',
         model_name: null,
-        timestamp: Date.now() // 防止缓存
+        timestamp: Date.now(), // 防止缓存
+        manuscript_id: shortStoryData.manuscriptId // 传递现有ID以支持重试
     };
 
     // 保存到全局状态
@@ -156,6 +158,9 @@ async function generateShortStorySettings(overriddenSummary = null) {
 
         if (result.success) {
             shortStoryData.step2 = result.data;
+            if (result.data.manuscript_id) {
+                shortStoryData.manuscriptId = result.data.manuscript_id;
+            }
             displayShortStorySettings(result.data);
             document.getElementById('short-story-step-2-actions').style.display = 'flex';
             return true;
@@ -288,7 +293,8 @@ async function generateShortStoryOutline() {
             headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
             body: JSON.stringify({
                 settings: shortStoryData.step2,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                manuscript_id: shortStoryData.manuscriptId
             }),
             signal: controller.signal
         });
@@ -416,7 +422,8 @@ async function generateShortStoryChapters() {
             body: JSON.stringify({
                 settings: shortStoryData.step2,
                 outline: shortStoryData.step3,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                manuscript_id: shortStoryData.manuscriptId
             }),
             signal: controller.signal
         });
@@ -501,39 +508,41 @@ async function generateShortStoryNovel() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                settings: shortStoryData.step2,
-                outline: shortStoryData.step3,
-                chapters: shortStoryData.step4
-            })
-        });
+                body: JSON.stringify({
+                    settings: shortStoryData.step2,
+                    outline: shortStoryData.step3,
+                    chapters: shortStoryData.step4,
+                    manuscript_id: shortStoryData.manuscriptId
+                })
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (result.success) {
-            shortStoryData.step5 = result.data;
-            shortStoryData.manuscriptId = result.data.manuscript_id;
-            displayShortStoryResult(result.data);
-            document.getElementById('short-story-step-5-actions').style.display = 'flex';
-            return true;
-        } else {
-            novelResult.innerHTML = `
+            if(result.success) {
+                shortStoryData.step5 = result.data;
+        shortStoryData.manuscriptId = result.data.manuscript_id;
+        displayShortStoryResult(result.data);
+        document.getElementById('short-story-step-5-actions').style.display = 'flex';
+        return true;
+    } else {
+        novelResult.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
                     <p>❌ 生成失败: ${result.message || '未知错误'}</p>
                     <button class="btn btn-primary" onclick="goToShortStoryStep(4)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
-            return false;
-        }
-    } catch (error) {
-        console.error('短故事成文失败:', error);
-        novelResult.innerHTML = `
+        return false;
+    }
+} catch (error) {
+    console.error('短故事成文失败:', error);
+    novelResult.innerHTML = `
             <div class="loading-state" style="color: var(--danger-color);">
                 <p>❌ 生成失败: ${error.message}</p>
                 <button class="btn btn-primary" onclick="goToShortStoryStep(4)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
-        return false;
-    }
+    return false;
+}
 }
 
 // 显示最终结果
@@ -753,6 +762,168 @@ function closeManuscriptReviewModal() {
     const modal = document.getElementById('manuscript-review-modal');
     if (modal) modal.style.display = 'none';
 }
+
+// ------------------ 稿件历史功能 ------------------
+
+// 显示稿件历史模态框
+async function showManuscriptHistory() {
+    const modal = document.getElementById('manuscript-history-modal');
+    if (modal) modal.style.display = 'block';
+
+    const listContainer = document.getElementById('manuscript-history-list');
+    listContainer.innerHTML = '<tr><td colspan="5" style="text-align: center;">⏳ 加载中...</td></tr>';
+
+    try {
+        const response = await fetch('/api/manuscripts');
+        const result = await response.json();
+
+        if (result.success) {
+            renderManuscriptList(result.data);
+        } else {
+            listContainer.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">❌ 加载失败: ${result.message}</td></tr>`;
+        }
+    } catch (error) {
+        console.error('加载稿件历史失败:', error);
+        listContainer.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">❌ 网络请求失败</td></tr>`;
+    }
+}
+
+function closeManuscriptHistoryModal() {
+    const modal = document.getElementById('manuscript-history-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// 渲染稿件列表
+function renderManuscriptList(manuscripts) {
+    const listContainer = document.getElementById('manuscript-history-list');
+
+    if (!manuscripts || manuscripts.length === 0) {
+        listContainer.innerHTML = '<tr><td colspan="5" style="text-align: center;">暂无历史稿件</td></tr>';
+        return;
+    }
+
+    let html = '';
+    manuscripts.forEach(m => {
+        const statusClass = {
+            'completed': 'status-success',
+            'generating': 'status-pending',
+            'failed': 'status-error'
+        }[m.status] || '';
+
+        const statusLabel = {
+            'completed': '已完成',
+            'generating': '生成中',
+            'failed': '失败'
+        }[m.status] || m.status;
+
+        html += `
+            <tr>
+                <td>${escapeHtml(m.title || '未命名')}</td>
+                <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                <td><span class="grade-badge-small">${m.grade || '-'}</span></td>
+                <td>${m.created_at}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="loadManuscript(${m.id})">📂 打开</button>
+                    ${m.status === 'completed' ? `<button class="btn btn-sm btn-secondary" onclick="viewManuscriptReview(${m.id})">🔍 审稿</button>` : ''}
+                </td>
+            </tr>
+        `;
+    });
+
+    listContainer.innerHTML = html;
+}
+
+// 加载特定稿件
+async function loadManuscript(manuscriptId) {
+    try {
+        // 关闭模态框
+        closeManuscriptHistoryModal();
+
+        // 显示全局加载
+        showToast('正在加载稿件...', 'info');
+
+        const response = await fetch(`/api/manuscripts/${manuscriptId}`);
+        const result = await response.json();
+
+        if (result.success) {
+            const data = result.data;
+
+            // 恢复全局状态
+            shortStoryData.manuscriptId = data.id;
+            shortStoryData.step5 = {
+                title: data.title,
+                content: data.content, // 如果 content 是章节列表
+                chapters: data.content.chapters || data.content, // 兼容性处理
+                project_id: data.project_id
+            };
+            shortStoryData.lastReview = data.review_report;
+            shortStoryData.lastGrade = data.grade;
+
+            // 加载步骤数据 (如果有)
+            if (data.steps && data.steps.length > 0) {
+                // 异步加载各步骤详情
+                loadStepData(manuscriptId, 'settings', 2, displayShortStorySettings);
+                loadStepData(manuscriptId, 'outline', 3, displayShortStoryOutline);
+                loadStepData(manuscriptId, 'chapters', 4, displayShortStoryChapters);
+            }
+
+            // 如果已完成，直接跳转到结果页
+            if (data.status === 'completed') {
+                displayShortStoryResult(shortStoryData.step5);
+                goToShortStoryStep(5);
+
+                // 如果有审稿报告，更新相关 UI
+                if (data.review_report) {
+                    // 可以在这里预加载审稿视图
+                }
+            } else {
+                // 如果未完成，跳转到生成设定页 (或者根据已有步骤判断)
+                goToShortStoryStep(1);
+            }
+
+            showToast('稿件加载成功', 'success');
+
+        } else {
+            showToast(`加载失败: ${result.message}`, 'error');
+        }
+    } catch (error) {
+        console.error('加载稿件失败:', error);
+        showToast('加载稿件失败', 'error');
+    }
+}
+
+// 加载特定步骤数据
+async function loadStepData(manuscriptId, stepName, stepNum, displayFunc) {
+    try {
+        const response = await fetch(`/api/manuscripts/${manuscriptId}/steps/${stepName}`);
+        const result = await response.json();
+
+        if (result.success) {
+            const stepKey = `step${stepNum}`;
+            shortStoryData[stepKey] = result.data;
+            if (displayFunc) {
+                displayFunc(result.data);
+            }
+            // 激活对应步骤的"查看"与"操作"按钮
+            const actionDiv = document.getElementById(`short-story-step-${stepNum}-actions`);
+            if (actionDiv) actionDiv.style.display = 'flex';
+        }
+    } catch (e) {
+        console.log(`步骤 ${stepName} 数据加载失败 (可能未生成)`);
+    }
+}
+
+// 查看稿件审稿 (快捷入口)
+async function viewManuscriptReview(manuscriptId) {
+    await loadManuscript(manuscriptId);
+    if (shortStoryData.lastReview) {
+        openManuscriptCompareView();
+    } else {
+        startShortStoryReview();
+    }
+}
+
+
 
 // 简单的Markdown渲染器 (处理标题、加粗、列表、分割线)
 function renderSimpleMarkdown(text) {

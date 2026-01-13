@@ -593,5 +593,17 @@ class Manuscript(Base):
     content = Column(JSON)        # 稿件正文 (可能是章节内容列表)
     review_report = Column(Text)  # AI 审稿报告
     grade = Column(String(10))    # AI 评级 (S, A, B, C)
+    status = Column(String(20), default="generating")  # generating, completed, failed
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
+
+
+class ManuscriptStep(Base):
+    """稿件生成步骤表 - 存储中间产物"""
+    __tablename__ = 'manuscript_steps'
+
+    id = Column(Integer, primary_key=True, index=True)
+    manuscript_id = Column(Integer)  # 关联的稿件ID
+    step_name = Column(String(50))   # 步骤名称: settings, outline, chapters
+    step_data = Column(JSON)         # 步骤数据 (JSON)
+    created_at = Column(DateTime, default=datetime.now)

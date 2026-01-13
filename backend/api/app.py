@@ -3899,6 +3899,245 @@ async def generate_inspiration_novel(request: NovelRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/short-story/generate-novel")
+async def generate_short_story_novel(request: ShortStoryNovelRequest):
+    """短故事: 一键成文(创建项目)"""
+    try:
+        settings = request.settings
+        outline = request.outline
+        chapters_data = request.chapters
+
+        db = next(get_db())
+
+        # 创建项目
+        project = NovelProject(
+            name=settings.get('title', '未命名'),
+            theme=settings.get('summary', ''),
+            background="", # 短故事通常没有详细背景
+            genre=settings.get('genre', ''),
+            core_conflict=settings.get('main_conflict', ''),
+            target_words=settings.get('target_words', 22000),
+            status="completed",
+            outline=outline,
+            characters=settings.get('characters', []),
+            chapters=[],
+            word_count=0
+        )
+
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+
+        # 转换章节格式
+        chapters = []
+        total_words = 0
+
+        for ch in chapters_data.get('chapters', []):
+            chapter = {
+                "id": ch.get('chapter_number', 1),
+                "title": ch.get('title', ''),
+                "summary": ch.get('summary', ''),
+                "content": ch.get('content', ''),
+                "word_count": ch.get('word_count', 0),
+                "order": ch.get('chapter_number', 1)
+            }
+            chapters.append(chapter)
+            total_words += ch.get('word_count', 0)
+
+        # 更新项目
+        project.chapters = chapters
+        project.word_count = total_words
+        db.commit()
+
+        # 填充规范化数据库表 (简化版)
+        # 1. 创建角色表数据
+        for char in settings.get('characters', []):
+            try:
+                character = Character(
+                    project_id=project.id,
+                    name=char.get('name', '未命名'),
+                    role_type=char.get('role_type', 'supporting'),
+                    importance='core' if char.get('role_type') == 'protagonist' else 'important',
+                    core_identity=char.get('identity'),
+                    core_personality=char.get('personality'),
+                    personality_flaw=char.get('flaw'),
+                    source="ai_generated"
+                )
+                db.add(character)
+            except Exception as e:
+                print(f"创建角色失败: {e}")
+        
+        # 2. 创建大纲和章节草稿
+        for idx, ch in enumerate(chapters_data.get('chapters', [])):
+            try:
+                # 匹配大纲信息 (尝试从outline中找对应章节)
+                outline_info = {}
+                for out_ch in outline.get('chapters', []):
+                    if out_ch.get('chapter_number') == ch.get('chapter_number'):
+                        outline_info = out_ch
+                        break
+                
+                # 创建大纲记录
+                plot_outline = PlotOutline(
+                    project_id=project.id,
+                    level="chapter",
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    summary=ch.get('summary', '') or outline_info.get('summary', ''),
+                    plot_points=[outline_info.get('summary', '')], # 简化处理
+                    target_words=outline_info.get('target_words', 2000),
+                    focus_elements=[],
+                    emotion_arc=f"{outline_info.get('emotion_type', '')} {outline_info.get('emotion_intensity', '')}",
+                    characters_involved=[], # 短故事简化
+                    source="ai_generated",
+                    status="generated",
+                    order=idx + 1
+                )
+                db.add(plot_outline)
+                db.flush() # 获取ID
+                
+                # 创建章节草稿
+                chapter_draft = ChapterDraft(
+                    project_id=project.id,
+                    outline_id=plot_outline.id,
+                    chapter_number=ch.get('chapter_number', idx + 1),
+                    title=ch.get('title', ''),
+                    content=ch.get('content', ''),
+                    word_count=ch.get('word_count', 0),
+                    status="completed",
+                    edit_count=0,
+                    ai_revision_count=1,
+                    human_ai_ratio="0:100",
+                    generation_params={"source": "short_story_assistant"}
+                )
+                db.add(chapter_draft)
+                
+            except Exception as e:
+                print(f"创建章节数据失败 (章节 {idx+1}): {e}")
+                
+        db.commit()
+
+        # === 更新稿件状态 ===
+        if request.manuscript_id:
+            try:
+                manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
+                if manuscript:
+                    manuscript.project_id = project.id
+                    manuscript.content = request.chapters
+                    manuscript.status = "completed"
+                    manuscript.updated_at = datetime.now()
+                    db.commit()
+            except Exception as e:
+                print(f"更新稿件状态失败: {e}")
+        
+        return {
+            "success": True, 
+            "data": {
+                "project_id": project.id,
+                "title": project.name,
+                "chapters": chapters,
+                "intro": settings.get('intro', ''), # 假设setting里有intro
+                "manuscript_id": request.manuscript_id # 返回稿件ID
+            },
+            "message": "小说生成完成!"
+        }
+
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"生成小说失败: {str(e)}")
+
+
+# =====================================================================
+# 稿件记录 API (Manuscript History)
+# =====================================================================
+
+@app.get("/api/manuscripts")
+async def list_manuscripts():
+    """获取稿件历史列表"""
+    try:
+        db = next(get_db())
+        manuscripts = db.query(Manuscript).order_by(Manuscript.created_at.desc()).all()
+        
+        result = []
+        for m in manuscripts:
+            result.append({
+                "id": m.id,
+                "title": m.title,
+                "status": m.status,
+                "grade": m.grade,
+                "project_id": m.project_id,
+                "created_at": m.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        return {"success": True, "data": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/manuscripts/{manuscript_id}")
+async def get_manuscript(manuscript_id: int):
+    """获取稿件详情 (包含步骤信息)"""
+    try:
+        db = next(get_db())
+        manuscript = db.query(Manuscript).filter(Manuscript.id == manuscript_id).first()
+        
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="稿件不存在")
+            
+        steps = db.query(ManuscriptStep).filter(
+            ManuscriptStep.manuscript_id == manuscript_id
+        ).order_by(ManuscriptStep.created_at).all()
+        
+        steps_data = []
+        for s in steps:
+            steps_data.append({
+                "id": s.id,
+                "step_name": s.step_name,
+                "created_at": s.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        return {
+            "success": True, 
+            "data": {
+                "id": manuscript.id,
+                "title": manuscript.title,
+                "content": manuscript.content,
+                "review_report": manuscript.review_report,
+                "grade": manuscript.grade,
+                "status": manuscript.status,
+                "project_id": manuscript.project_id,
+                "created_at": manuscript.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "steps": steps_data
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/manuscripts/{manuscript_id}/steps/{step_name}")
+async def get_manuscript_step(manuscript_id: int, step_name: str):
+    """获取特定步骤的中间产物"""
+    try:
+        db = next(get_db())
+        step = db.query(ManuscriptStep).filter(
+            ManuscriptStep.manuscript_id == manuscript_id,
+            ManuscriptStep.step_name == step_name
+        ).order_by(ManuscriptStep.created_at.desc()).first()
+        
+        if not step:
+            raise HTTPException(status_code=404, detail=f"找不到步骤 {step_name} 的数据")
+            
+        return {"success": True, "data": step.step_data}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ========== 短故事创作助手 API ==========
 
 class ShortStorySettingsRequest(BaseModel):
@@ -3938,6 +4177,12 @@ class ShortStoryRewriteRequest(BaseModel):
     story_data: Dict[str, Any]
     review_report: str
     instruction: Optional[str] = None
+    manuscript_id: Optional[int] = None  # 支持基于现有稿件重试
+
+
+class ShortStoryStepRequest(BaseModel):
+    manuscript_id: int
+    step_name: str
 
 
 @app.post("/api/short-story/generate-settings")
@@ -4015,6 +4260,37 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
         result = parse_json_response(response)
         
         if result:
+            # === 保存稿件和步骤数据 ===
+            db = next(get_db())
+            
+            # 如果有 manuscript_id，说明是重试，更新现有稿件
+            if request.manuscript_id:
+                manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
+                if manuscript:
+                    manuscript.title = result.get('title', '未命名')
+                    manuscript.updated_at = datetime.now()
+            else:
+                # 创建新稿件
+                manuscript = Manuscript(
+                    project_id=0, # 暂时为0，最后成文才关联具体项目
+                    title=result.get('title', '未命名'),
+                    status="generating"
+                )
+                db.add(manuscript)
+                db.commit() # 获取ID
+                db.refresh(manuscript)
+            
+            # 保存/更新 步骤数据
+            step = ManuscriptStep(
+                manuscript_id=manuscript.id,
+                step_name="settings",
+                step_data=result
+            )
+            db.add(step)
+            db.commit()
+            
+            # 返回数据中带上 ID
+            result['manuscript_id'] = manuscript.id
             return {"success": True, "data": result}
         else:
             return {"success": False, "message": "AI响应解析失败", "raw": response[:1000]}
@@ -4026,6 +4302,10 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"生成设定失败: {str(e)}")
 
+
+class ShortStoryOutlineRequest(BaseModel):
+    settings: Dict[str, Any]
+    manuscript_id: Optional[int] = None  # 新增
 
 @app.post("/api/short-story/generate-outline")
 async def generate_short_story_outline(request: ShortStoryOutlineRequest):
@@ -4097,8 +4377,23 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
         result = parse_json_response(response)
         
         if result and result.get('chapters'):
+            # === 保存步骤数据 ===
+            if request.manuscript_id:
+                try:
+                    db = next(get_db())
+                    step = ManuscriptStep(
+                        manuscript_id=request.manuscript_id,
+                        step_name="outline",
+                        step_data=result
+                    )
+                    db.add(step)
+                    db.commit()
+                except Exception as db_e:
+                    print(f"保存大纲步骤失败: {db_e}")
+
             return {"success": True, "data": result}
         else:
+
             # 如果解析失败，返回失败，让前端处理
             print(f"大纲JSON解析失败。原始响应长度: {len(response)}")
             return {
@@ -4113,6 +4408,12 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"生成大纲失败: {str(e)}")
+
+
+class ShortStoryChaptersRequest(BaseModel):
+    settings: Dict[str, Any]
+    outline: Dict[str, Any]
+    manuscript_id: Optional[int] = None # 新增
 
 
 @app.post("/api/short-story/generate-chapters")
@@ -4214,7 +4515,25 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
         
         print(f"短故事章节生成完成，成功 {len(generated_chapters)}/{len(chapters)} 章")
         
-        return {"success": True, "data": {"chapters": generated_chapters}}
+        print(f"短故事章节生成完成，成功 {len(generated_chapters)}/{len(chapters)} 章")
+        
+        result_data = {"chapters": generated_chapters}
+
+        # === 保存步骤数据 ===
+        if request.manuscript_id:
+            try:
+                db = next(get_db())
+                step = ManuscriptStep(
+                    manuscript_id=request.manuscript_id,
+                    step_name="chapters",
+                    step_data=result_data
+                )
+                db.add(step)
+                db.commit()
+            except Exception as db_e:
+                print(f"保存章节步骤失败: {db_e}")
+
+        return {"success": True, "data": result_data}
         
     except HTTPException as e:
         raise e
@@ -4222,6 +4541,13 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"生成章节失败: {str(e)}")
+
+
+class ShortStoryNovelRequest(BaseModel):
+    settings: Dict[str, Any]
+    outline: Dict[str, Any]
+    chapters: Dict[str, Any]
+    manuscript_id: Optional[int] = None # 新增
 
 
 @app.post("/api/short-story/generate-novel")
