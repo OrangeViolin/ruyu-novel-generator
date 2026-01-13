@@ -3875,10 +3875,12 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
         else:
             return {"success": False, "message": "AI响应解析失败", "raw": response[:1000]}
             
+    except HTTPException as e:
+        raise e
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"生成设定失败: {str(e)}")
 
 
 @app.post("/api/short-story/generate-outline")
@@ -3946,26 +3948,23 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
         # 尝试清理和解析
         result = parse_json_response(response)
         
-        if result:
+        if result and result.get('chapters'):
             return {"success": True, "data": result}
         else:
-            # 如果解析失败，尝试构建一个基本的结构返回，避免前端报错
-            print(f"大纲JSON解析失败，尝试构建基础结构。原始响应长度: {len(response)}")
+            # 如果解析失败，返回失败，让前端处理
+            print(f"大纲JSON解析失败。原始响应长度: {len(response)}")
             return {
-                "success": True, 
-                "data": {
-                    "total_chapters": chapter_count,
-                    "target_words": target_words,
-                    "chapters": [],
-                    "note": "AI生成的大纲格式有误，请重试或手动编辑"
-                },
-                "message": "大纲生成部分失败，请重试"
+                "success": False, 
+                "message": "大纲生成异常或格式错误，请尝试重新生成方案或修改摘要。",
+                "raw": response[:1000]
             }
             
+    except HTTPException as e:
+        raise e
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"生成大纲失败: {str(e)}")
 
 
 @app.post("/api/short-story/generate-chapters")
@@ -3976,13 +3975,18 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
         outline = request.outline
         chapters = outline.get('chapters', [])
         
-        if not chapters:
-            raise HTTPException(status_code=400, detail="大纲中没有章节")
+        if not chapters or not isinstance(chapters, list):
+            raise HTTPException(status_code=400, detail="大纲中没有有效的章节信息")
         
         # 构建角色上下文
+        characters = settings.get('characters', [])
+        if not characters or not isinstance(characters, list):
+            # 尝试修复或使用默认
+            characters = []
+            
         character_context = "\n".join([
-            f"**{c.get('name', '')}**: {c.get('identity', '')} - {c.get('personality', '')}"
-            for c in settings.get('characters', [])
+            f"**{c.get('name', '未知角色')}**: {c.get('identity', '')} - {c.get('personality', '')}"
+            for c in characters if isinstance(c, dict)
         ])
         
         perspective = settings.get('perspective', '第一人称')
@@ -4066,10 +4070,12 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
         
         return {"success": True, "data": {"chapters": generated_chapters}}
         
+    except HTTPException as e:
+        raise e
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"生成章节失败: {str(e)}")
 
 
 @app.post("/api/short-story/generate-novel")
@@ -4205,10 +4211,12 @@ async def generate_short_story_novel(request: ShortStoryNovelRequest):
             "message": "短故事生成完成!"
         }
         
+    except HTTPException as e:
+        raise e
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"整合小说失败: {str(e)}")
 
 
 if __name__ == "__main__":

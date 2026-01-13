@@ -15,6 +15,24 @@ let isShortStoryOneClickMode = false;
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
     console.log('短故事创作助手初始化完成');
+
+    // 初始化批量模式切换
+    const batchToggle = document.getElementById('short-story-batch-mode');
+    if (batchToggle) {
+        batchToggle.addEventListener('change', function () {
+            const hint = document.getElementById('short-story-batch-hint');
+            const summaryArea = document.getElementById('short-story-summary');
+            if (this.checked) {
+                hint.style.display = 'block';
+                summaryArea.placeholder = "一行一个灵感，例如：\n1. 都市神医救了总裁后的故事\n2. 废柴女婿翻身记\n3. 重生回到1990当首富";
+                summaryArea.rows = 6;
+            } else {
+                hint.style.display = 'none';
+                summaryArea.placeholder = "描述你的故事灵感,例如:一个都市白领发现自己的老公竟然是...";
+                summaryArea.rows = 3;
+            }
+        });
+    }
 });
 
 // 步骤导航
@@ -51,11 +69,11 @@ function goToShortStoryStep(stepNumber) {
 }
 
 // 第一步: 生成设定
-async function generateShortStorySettings() {
+async function generateShortStorySettings(overriddenSummary = null) {
     // 收集表单数据
     const genre = document.getElementById('short-story-genre').value;
     const perspective = document.getElementById('short-story-perspective').value;
-    const summary = document.getElementById('short-story-summary').value.trim();
+    const summary = (overriddenSummary !== null) ? overriddenSummary : document.getElementById('short-story-summary').value.trim();
     const targetWords = document.getElementById('short-story-words').value;
     const chapterCount = document.getElementById('short-story-chapters').value;
 
@@ -77,7 +95,8 @@ async function generateShortStorySettings() {
         summary,
         targetWords: parseInt(targetWords),
         chapterCount: parseInt(chapterCount),
-        tropes
+        tropes,
+        timestamp: Date.now() // 防止缓存
     };
 
     // 保存到全局状态
@@ -94,6 +113,7 @@ async function generateShortStorySettings() {
                 <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
                 <p>AI正在创作短故事设定中,请稍候...</p>
                 <p style="font-size: 0.9rem; margin-top: 0.5rem;">这可能需要15-30秒</p>
+                ${isShortStoryOneClickMode ? '<p style="color:var(--primary-color);font-weight:bold;">🚀 正在批量/自动生成中...</p>' : ''}
             </div>
         </div>
     `;
@@ -102,9 +122,10 @@ async function generateShortStorySettings() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 300000);
 
-        const response = await fetch('/api/short-story/generate-settings', {
+        // 添加随机参数防缓存
+        const response = await fetch(`/api/short-story/generate-settings?t=${Date.now()}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
             body: JSON.stringify(data),
             signal: controller.signal
         });
@@ -118,6 +139,7 @@ async function generateShortStorySettings() {
             document.getElementById('short-story-step-2-actions').style.display = 'flex';
             return true;
         } else {
+            // Error handling...
             settingsContent.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
                     <p>❌ 生成失败: ${result.message || '未知错误'}</p>
@@ -233,17 +255,20 @@ async function generateShortStoryOutline() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 600000);
 
-        const response = await fetch('/api/short-story/generate-outline', {
+        const response = await fetch(`/api/short-story/generate-outline?t=${Date.now()}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ settings: shortStoryData.step2 }),
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+            body: JSON.stringify({
+                settings: shortStoryData.step2,
+                timestamp: Date.now()
+            }),
             signal: controller.signal
         });
 
         clearTimeout(timeoutId);
         const result = await response.json();
 
-        if (result.success) {
+        if (result.success && result.data && result.data.chapters && result.data.chapters.length > 0) {
             shortStoryData.step3 = result.data;
             displayShortStoryOutline(result.data);
             document.getElementById('short-story-step-3-actions').style.display = 'flex';
@@ -251,7 +276,7 @@ async function generateShortStoryOutline() {
         } else {
             outlineContent.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
-                    <p>❌ 生成失败: ${result.message || '未知错误'}</p>
+                    <p>❌ 生成失败: ${result.message || '大纲内容为空或解析失败'}</p>
                     <button class="btn btn-primary" onclick="goToShortStoryStep(2)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
@@ -333,8 +358,8 @@ function displayShortStoryOutline(data) {
 
 // 第三步: 生成章节
 async function generateShortStoryChapters() {
-    if (!shortStoryData.step3 || !shortStoryData.step3.chapters) {
-        alert('大纲数据无效，请重新生成大纲');
+    if (!shortStoryData.step3 || !shortStoryData.step3.chapters || shortStoryData.step3.chapters.length === 0) {
+        alert('大纲数据无效或章节为空，请重新生成大纲');
         goToShortStoryStep(3);
         return false;
     }
@@ -347,21 +372,23 @@ async function generateShortStoryChapters() {
             <div style="text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📖</div>
                 <p>AI正在并行创作章节,请稍候...</p>
-                <p style="font-size: 0.9rem; margin-top: 0.5rem;">这可能需要1-3分钟</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">这可能需要5-15分钟，取决于章节数量</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">请耐心等待，不要关闭页面</p>
             </div>
         </div>
     `;
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000);
+        const timeoutId = setTimeout(() => controller.abort(), 1800000); // 30分钟超时
 
-        const response = await fetch('/api/short-story/generate-chapters', {
+        const response = await fetch(`/api/short-story/generate-chapters?t=${Date.now()}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
             body: JSON.stringify({
                 settings: shortStoryData.step2,
-                outline: shortStoryData.step3
+                outline: shortStoryData.step3,
+                timestamp: Date.now()
             }),
             signal: controller.signal
         });
@@ -583,14 +610,34 @@ function resetShortStory() {
     }
 }
 
-// 一键生成全书流程
 // 一键生成全书流程 (支持批量)
 async function startShortStoryOneClick() {
-    // 1. 获取批量生成数量
-    const countSelect = document.getElementById('short-story-count');
-    const batchCount = countSelect ? parseInt(countSelect.value) : 1;
+    // 1. 获取批量模式和数据
+    const batchToggle = document.getElementById('short-story-batch-mode');
+    const isBatchInspiration = batchToggle ? batchToggle.checked : false;
+    const summaryText = document.getElementById('short-story-summary').value.trim();
 
-    // 2. 检查题材
+    let inspirations = [null]; // 默认单篇，不覆盖灵感
+    if (isBatchInspiration && summaryText) {
+        inspirations = summaryText.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        if (inspirations.length === 0) {
+            alert('详情请输入至少一个灵感（一行一个）');
+            return;
+        }
+    }
+
+    // 2. 获取数量限制 (如果是批量灵感，则数量由灵感条数决定)
+    const countSelect = document.getElementById('short-story-count');
+    let batchCount = countSelect ? parseInt(countSelect.value) : 1;
+
+    if (isBatchInspiration) {
+        batchCount = inspirations.length;
+    }
+
+    // 3. 检查题材
     const genre = document.getElementById('short-story-genre').value;
     if (!genre) {
         alert('请选择题材类型');
@@ -605,7 +652,10 @@ async function startShortStoryOneClick() {
 
     // 循环生成
     for (let i = 1; i <= batchCount; i++) {
-        showToast(`🚀 正在启动第 ${i}/${batchCount} 篇短故事生成...`, 'info');
+        const currentInspiration = isBatchInspiration ? inspirations[i - 1] : null;
+        const progressTag = isBatchInspiration ? `[灵感: ${currentInspiration.substring(0, 10)}...]` : `${i}/${batchCount}`;
+
+        showToast(`🚀 正在启动第 ${progressTag} 篇短故事生成...`, 'info');
 
         // 如果是第2篇及以上，重置一下数据状态，但保留Step1的用户设置
         if (i > 1) {
@@ -616,11 +666,9 @@ async function startShortStoryOneClick() {
         }
 
         // Step 1: 生成设定
-        // 修改: 为了避免重复，如果摘要为空，后端已有随机逻辑。
-        // 我们只需调用函数，它会读取当前表单值。
-        const success1 = await generateShortStorySettings();
+        const success1 = await generateShortStorySettings(currentInspiration);
         if (!success1) {
-            errors.push(`第 ${i} 篇设定生成失败`);
+            errors.push(`第 ${i} 篇设定生成失败: ${currentInspiration ? currentInspiration.substring(0, 20) : ''}`);
             if (batchCount === 1) {
                 isShortStoryOneClickMode = false;
                 return;
@@ -703,18 +751,43 @@ function displayBatchResults(results, errors) {
             <p>共成功生成 <strong>${results.length}</strong> 篇短故事</p>
         </div>
         
-        <div class="batch-results-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="batch-results-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
     `;
 
     results.forEach((navel, idx) => {
+        // 构建全文
+        let fullText = `${navel.title || '未命名'}\n\n`;
+        if (navel.intro) fullText += `${navel.intro}\n\n`;
+        if (navel.chapters) {
+            navel.chapters.forEach(ch => {
+                fullText += `${ch.title}\n\n${ch.content}\n\n`;
+            });
+        }
+
+        // 存储全文数据到全局对象，方便后续调用
+        if (!window.batchTexts) window.batchTexts = {};
+        window.batchTexts[navel.project_id] = fullText;
+
         html += `
             <div class="batch-card" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);">
-                 <h4 style="margin-bottom: 0.5rem; color: var(--primary-color);">#${idx + 1} ${escapeHtml(navel.title)}</h4>
-                 <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                    字数: ${navel.chapters ? navel.chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0) : 0} | ID: ${navel.project_id}
+                 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                     <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--primary-color); font-size: 1.25rem;">#${idx + 1} ${escapeHtml(navel.title)}</h4>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            字数: ${navel.chapters ? navel.chapters.reduce((sum, ch) => sum + (ch.word_count || 0), 0) : 0} | ID: ${navel.project_id}
+                        </div>
+                        ${navel.intro ? `<p style="font-size: 0.9rem; color: var(--text-secondary); font-style: italic; max-width: 600px;">"${escapeHtml(navel.intro.substring(0, 100))}..."</p>` : ''}
+                     </div>
+                     
+                     <div style="display: flex; gap: 0.8rem;">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleBatchPreview('${navel.project_id}')">📖 预览全文</button>
+                        <button class="btn btn-sm" style="background-color: var(--success-color); color: white;" onclick="copyBatchText('${navel.project_id}', this)">📋 复制全文</button>
+                        <a href="/api/novel/export/${navel.project_id}" class="btn btn-sm btn-primary" target="_blank">📥 导出Word</a>
+                     </div>
                  </div>
-                 <div style="display: flex; gap: 0.5rem;">
-                    <a href="/api/novel/export/${navel.project_id}" class="btn btn-sm btn-primary" target="_blank">📥 导出</a>
+                 
+                 <div id="preview-${navel.project_id}" style="display:none; margin-top:1.5rem; background: var(--bg-tertiary); padding:1.5rem; border-radius:8px; border: 1px solid var(--border-color);">
+                    <div style="max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'PingFang SC', system-ui; font-size: 1rem; line-height: 1.6;">${escapeHtml(fullText)}</div>
                  </div>
             </div>
         `;
@@ -740,6 +813,29 @@ function displayBatchResults(results, errors) {
     `;
 
     content.innerHTML = html;
+}
+
+// 批量结果预览切换
+function toggleBatchPreview(projectId) {
+    const el = document.getElementById(`preview-${projectId}`);
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+// 批量结果复制
+function copyBatchText(projectId, btn) {
+    const text = window.batchTexts ? window.batchTexts[projectId] : '';
+    if (!text) return;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = '✅ 已复制';
+        setTimeout(() => btn.innerText = originalText, 2000);
+    }).catch(err => {
+        console.error('复制失败:', err);
+        alert('复制失败，请手动复制');
+    });
 }
 
 

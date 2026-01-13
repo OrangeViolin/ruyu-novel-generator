@@ -404,9 +404,22 @@
                             </div>
 
                             <div class="form-group">
-                                <label>故事灵感/简介 (可选)</label>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <label style="margin-bottom: 0;">故事灵感/简介 (可选)</label>
+                                    <label
+                                        style="font-size: 0.85rem; color: var(--primary-color); cursor: pointer; display: flex; align-items: center;">
+                                        <input type="checkbox" id="short-story-batch-mode"
+                                            style="margin-right: 0.5rem;">
+                                        批量灵感模式 (一行一个灵感)
+                                    </label>
+                                </div>
                                 <textarea id="short-story-summary" rows="3"
                                     placeholder="描述你的故事灵感,例如:一个都市白领发现自己的老公竟然是..."></textarea>
+                                <p id="short-story-batch-hint"
+                                    style="display: none; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.4rem;">
+                                    💡 批量模式下，系统将为每一行文字单独生成一篇完整的短故事。
+                                </p>
                             </div>
 
                             <div class="form-row">
@@ -1864,7 +1877,7 @@
     <script src="/static/js/agents.js?v=1"></script>
     <script src="/static/js/materials.js?v=1"></script>
     <script src="/static/js/inspiration.js?v=1705021000"></script>
-    <script src="/static/js/short-story.js?v=1"></script>
+    <script src="/static/js/short-story.js?v=2"></script>
     <script src="/static/js/channel-agents.js?v=9"></script>
 </body>
 
