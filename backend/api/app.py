@@ -3791,6 +3791,19 @@ class ShortStoryNovelRequest(BaseModel):
     chapters: Dict[str, Any]
 
 
+class ShortStoryReviewRequest(BaseModel):
+    title: str
+    intro: str
+    chapters: List[Dict[str, Any]]
+    settings: Dict[str, Any]
+
+
+class ShortStoryRewriteRequest(BaseModel):
+    story_data: Dict[str, Any]
+    review_report: str
+    instruction: Optional[str] = None
+
+
 @app.post("/api/short-story/generate-settings")
 async def generate_short_story_settings(request: ShortStorySettingsRequest):
     """短故事: 生成设定 (含30字标题、极致人设)"""
@@ -3798,11 +3811,11 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
         tropes_str = "、".join(request.tropes) if request.tropes else "自由发挥"
         perspective_str = "第一人称" if request.perspective == "first" else "第三人称"
         
-        prompt = f"""你是专业的短故事创作专家。请根据以下要求生成一个短故事设定。
+        prompt = f"""你是专业的短故事创作专家，擅长创作新媒体爆款、反转不断的钩子文。请根据以下要求生成一个短故事设定。
 
 **核心规范:**
 - 字数限制: 严格{request.targetWords}字以内，一篇完结
-- 节奏: 紧凑，剧情跌宕起伏
+- 节奏: 极速推进，无废话
 - 视角: {perspective_str}
 - 题材: {request.genre}
 - 爆点梗: {tropes_str}
@@ -3810,56 +3823,51 @@ async def generate_short_story_settings(request: ShortStorySettingsRequest):
 **用户灵感:**
 {request.summary if request.summary else "由AI自由发挥创意"}
 
-**创作要求:**
+**新媒体爆款(Viral DNA)要求:**
 
-1. **标题** (非常重要):
-   - 严格控制在25字以内，三段式结构
-   - 包含: 人物关系 + 亮点爆点 + 情感共鸣
-   - 有故事感、画面感、悬念感
-   - 示例: "同学聚会遇到公公，回家后他竟给我一万封口费"
+1. **标题 (重中之重):**
+   - 25字以内。必须极具冲击力。
+   - 结构：[身份反差] + [极端反转/行为] + [悬念诱饵]
+   - 示例："发现丈夫和小妹的聊天记录，我反手给他们办了婚礼，三年后他跪求复婚"
+   - 严禁平淡。
 
-2. **故事简介**: 50-100字，点明核心冲突
+2. **核心冲突:**
+   - 必须包含“信息差” (只有主角或读者知道，反派不知道的真相)。
+   - 包含“阶级/地位反转”或“情感背叛后的反杀”。
 
-3. **主要矛盾**: 必须极其强烈，能推动整个故事发展
+3. **人设极致:**
+   - 主角：不能圣母，必须有强烈的反击意志或独特的复仇手段。
+   - 反派：极度招人恨，其下场必须极其凄凉以满足“爽点”。
 
-4. **文风要求**:
-   - 接地气，生活化，拒绝翻译腔
-   - 设定要新颖，反套路
-
-5. **角色设定** (人物要极致):
-   - 主角: 鲜明极致的性格，有致命缺陷
-   - 反派: 极端反面性格，有合理动机
-   - 人物不超过4个
-
-6. **黄金三章设计**:
-   - 第一章钩子: 开头100字直入主题的极强看点
-   - 第二章冲突: 矛盾升级
-   - 第三章爆发: 情绪高潮
+4. **文风:**
+   - 黄金开篇：100字内必须爆发第一个矛盾点。
+   - 短句为主，情绪饱满。
 
 请严格按照以下JSON格式返回:
 ```json
 {{
-  "title": "25字以内的三段式标题",
-  "summary": "50-100字故事简介",
-  "main_conflict": "核心矛盾描述",
+  "title": "爆款标题",
+  "summary": "包含钩子和反转的情节简介",
+  "main_conflict": "核心矛盾与信息差设计",
   "genre": "{request.genre}",
   "perspective": "{perspective_str}",
   "target_words": {request.targetWords},
   "chapter_count": {request.chapterCount},
   "tropes": {json.dumps(request.tropes, ensure_ascii=False)},
+  "viral_dna": "本篇的爆款核心在哪（如：反转、打脸、悬疑）",
   "characters": [
     {{
       "name": "角色名",
       "role_type": "protagonist/antagonist/supporting",
-      "identity": "核心身份",
+      "identity": "反转前/后的双重身份",
       "personality": "极致性格描述",
-      "flaw": "致命缺陷"
+      "flaw": "致命缺陷/伪装弱点"
     }}
   ],
   "golden_chapters": {{
-    "chapter1": "第一章钩子设计",
-    "chapter2": "第二章冲突设计",
-    "chapter3": "第三章爆发设计"
+    "chapter1": "第一章极强钩子",
+    "chapter2": "第二章矛盾激化",
+    "chapter3": "第三章反转/高潮"
   }}
 }}
 ```
@@ -3888,35 +3896,39 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
     """短故事: 生成大纲 (紧凑节奏，每章设钩子)"""
     try:
         settings = request.settings
-        chapter_count = settings.get('chapter_count', 8)
-        target_words = settings.get('target_words', 22000)
         
+        # 强制转换为整数，处理AI可能返回字符串的情况
+        try:
+            chapter_count = int(settings.get('chapter_count', 8))
+            target_words = int(settings.get('target_words', 22000))
+        except (ValueError, TypeError):
+            chapter_count = 8
+            target_words = 22000
+            
         # 计算每章字数
         words_per_chapter = target_words // chapter_count
         
-        prompt = f"""你是专业的短故事大纲创作专家。基于以下设定生成紧凑的章节大纲。
+        prompt = f"""你是顶级网文架构师，擅长设计令人废寝忘食的爆款大纲。基于以下设定生成紧凑的章节大纲。
 
 **小说设定:**
 标题: {settings.get('title', '未命名')}
-简介: {settings.get('summary', '')}
-主要矛盾: {settings.get('main_conflict', '')}
+故事简介: {settings.get('summary', '')}
+爆款核心: {settings.get('viral_dna', '')}
+主要矛盾与信息差: {settings.get('main_conflict', '')}
 题材: {settings.get('genre', '')}
 
-**角色:**
+**角色设定:**
 {json.dumps(settings.get('characters', []), ensure_ascii=False, indent=2)}
 
 **黄金三章设计:**
 {json.dumps(settings.get('golden_chapters', {}), ensure_ascii=False, indent=2)}
 
-**大纲要求:**
-1. 共 {chapter_count} 章，总字数 {target_words} 字
-2. 每章约 {words_per_chapter} 字
-3. 节奏极其紧凑，不设水分
-4. 每章必须设置:
-   - 次要矛盾或悬念
-   - 结尾钩子 (吸引继续阅读)
-5. 前30%设置最强解锁点
-6. 情绪曲线要跌宕起伏
+**大纲架构要求:**
+1. 共 {chapter_count} 章，总字数 {target_words} 字。
+2. **钩子为王**: 每章结尾必须是一个强力悬念（钩子），让读者愿意“付费预览”或立即点击下一章。
+3. **冲突高频**: 拒绝平淡描述，每章必须有一个完整的小冲突或大冲突的递进。
+4. **信息差挖掘**: 利用角色间的信息不对称制造误会、反转或期待感。
+5. **情绪曲线**: 情绪从“压抑/受辱”到“爆发/反击”的曲线要清晰。
 
 请按JSON格式返回:
 ```json
@@ -3924,18 +3936,18 @@ async def generate_short_story_outline(request: ShortStoryOutlineRequest):
   "total_chapters": {chapter_count},
   "target_words": {target_words},
   "emotion_curve": [
-    {{"chapter": 1, "intensity": 7, "type": "紧张"}}
+    {{"chapter": 1, "intensity": 7, "type": "紧张/压抑"}}
   ],
   "chapters": [
     {{
       "chapter_number": 1,
-      "title": "章节标题",
-      "summary": "章节摘要 (100字)",
+      "title": "爆点标题",
+      "summary": "包含核心冲突和行动的摘要",
       "target_words": {words_per_chapter},
-      "hook": "本章钩子/悬念",
-      "secondary_conflict": "次要矛盾",
+      "hook": "本章强力悬念/反转点",
+      "secondary_conflict": "本章制造的麻烦/阻碍",
       "emotion_intensity": 7,
-      "emotion_type": "紧张"
+      "emotion_type": "压抑/反击/爽点"
     }}
   ]
 }}
@@ -4000,33 +4012,31 @@ async def generate_short_story_chapters(request: ShortStoryChaptersRequest):
             
             is_first_chapter = (chapter_num == 1)
             
-            prompt = f"""你是专业的短故事作家。请创作第{chapter_num}章内容。
+            prompt = f"""你是顶级网文写手，擅长新媒体爆款创作，文风犀利、情绪饱满、节奏感极强。
+请创作第 {chapter_num} 章内容。
 
-**小说信息:**
+**小说核心:**
 标题: {settings.get('title', '')}
+爆款DNA: {settings.get('viral_dna', '')}
 视角: {perspective}
-本章: 第{chapter_num}章 - {title}
+本章标题: {title}
 
-**本章摘要:**
-{summary}
+**本章任务:**
+摘要: {summary}
+必须包含的强力钩子/反转: {hook}
+次要矛盾/冲突点: {chapter_outline.get('secondary_conflict', '')}
 
-**本章钩子/悬念:**
-{hook}
-
-**角色:**
+**人物关系图谱:**
 {character_context}
 
-**创作要求:**
-1. 字数: 严格{target_words}字左右
-2. 视角: {perspective}视角叙述
-3. 节奏: 极其紧凑，不要拖沓
-{"4. 开头100字必须直入主题，制造极强看点" if is_first_chapter else "4. 承接上文，快速推进"}
-5. 心理描写: 重点刻画，烘托氛围
-6. 结尾: 必须有悬念或转折
-7. 文风: 接地气，生活化，用词要新，拒绝陈旧套路
-8. 禁止: 赘述、水分、冗长描写
+**创作准则 (Viral Standard):**
+1. **黄金开篇**: 每一章开头必须承接上文悬念，或立即开启新的小高潮。
+2. **极速推进**: 严禁大段背景描写和心理独白，将所有情绪融入对话和动作中。
+3. **情绪张力**: 每一段对话都要有潜台词，体现身份反差、压抑或爽点。
+4. **视觉化动词**: 使用高饱和度的词汇，描述角色的微表情和肢体冲突。
+5. **钩子收尾**: 本章结尾必须停在最扣人心弦的瞬间。
 
-直接输出章节内容，不要有任何说明。
+直接输出正文，不要有任何说明文字。
 """
             try:
                 messages = [{"role": "user", "content": prompt}]
@@ -4217,6 +4227,188 @@ async def generate_short_story_novel(request: ShortStoryNovelRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"整合小说失败: {str(e)}")
+
+
+@app.post("/api/short-story/review")
+async def review_short_story(request: ShortStoryReviewRequest):
+    """短故事: AI 审稿 (结构-情绪 双轨版)"""
+    try:
+        chapters_text = "\n\n".join([
+            f"### 第{c.get('chapter_number', i+1)}章: {c.get('title', '')}\n{c.get('content', '')}"
+            for i, c in enumerate(request.chapters)
+        ])
+        
+        prompt = f"""你是一位毒舌但极具实操经验的网文大主编，擅长从“结构”和“情绪”双线诊断爆款潜力。
+请对以下短篇小说进行深度审稿。
+
+**小说信息:**
+标题: {request.title}
+题材: {request.settings.get('genre', '')}
+简介: {request.intro}
+
+**正文内容:**
+{chapters_text}
+
+---
+
+**审稿要求:**
+你需要输出一份极其专业的审稿报告，格式必须严格参照以下模板：
+
+1. **核心评级**: (S/A/B/C) + 核心短评
+2. **第一部分：逐章结构与情绪双轨诊断**:
+   - 对标文：说明该题材的黄金结构要求
+   - 用户文诊断：逐章分析结构定位、情绪曲线、优缺点
+3. **第二部分：四维核心问题诊断**:
+   - 节奏与铺垫 (Pacing & Setup)
+   - 人设与一致性 (Character & Consistency)
+   - 冲突与爽点 (Conflict & Stakes)
+   - 付费卡点 (Pay-for-Click Point)
+4. **第三部分：核心修改方案**:
+   - 明确指出哪些章节需要压缩，哪些高能剧情需要前置。
+
+**注意:** 语言要犀利、专业、充满行业黑话（如：卡点、钩子、黄金三章、情绪断裂、种田陷阱等）。
+
+请以 Markdown 格式输出。
+"""
+        messages = [{"role": "user", "content": prompt}]
+        report = ai_client._call_api(messages, temperature=0.8, max_tokens=6000)
+        
+        # 提取评级
+        grade = "B"
+        if "**S**" in report or "评级：S" in report: grade = "S"
+        elif "**A**" in report or "评级：A" in report: grade = "A"
+        elif "**C**" in report or "评级：C" in report: grade = "C"
+        
+        return {"success": True, "data": {"report": report, "grade": grade}}
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"审稿失败: {str(e)}")
+
+
+@app.post("/api/short-story/rewrite")
+async def rewrite_short_story(request: ShortStoryRewriteRequest):
+    """短故事: 根据审稿报告重写"""
+    try:
+        story = request.story_data
+        report = request.review_report
+        instruction = request.instruction or ""
+        
+        chapters = story.get('chapters', [])
+        chapters_summary = "\n".join([
+            f"- 第{c.get('chapter_number', i+1)}章: {c.get('title', '')} (约{c.get('word_count', 0)}字)"
+            for i, c in enumerate(chapters)
+        ])
+        
+        # 1. 生成重写计划 (JSON)
+        plan_prompt = f"""你是顶级网文主编。请根据“审稿报告”，为这部短篇小说的每一章制定详细的“重写指令”。
+        
+**审稿报告建议:**
+{report}
+
+**额外修改要求:**
+{instruction}
+
+**原稿章节列表:**
+{chapters_summary}
+
+**任务:**
+请输出一份JSON格式的重写计划，明确每一章需要如何根据建议进行具体调整（如：将冲突从第三章移到第一章，强化主角在第二章的反击等）。
+
+格式如下：
+```json
+{{
+  "rewrite_plan": [
+    {{
+      "chapter_number": 1,
+      "original_title": "旧标题",
+      "new_title": "新爆款标题",
+      "modifications": "具体修改点：1... 2... 3...",
+      "target_hook": "本章必须强化的悬念/钩子"
+    }}
+  ]
+}}
+```
+"""
+        messages = [{"role": "user", "content": plan_prompt}]
+        plan_response = ai_client._call_api(messages, temperature=0.7, max_tokens=2000)
+        plan_result = parse_json_response(plan_response)
+        
+        if not plan_result or not plan_result.get('rewrite_plan'):
+            # 记录原始响应以便调试
+            with open("plan_response_error.log", "w") as f:
+                f.write(f"RAW RESPONSE:\n{plan_response}\n\nPARSED RESULT:\n{json.dumps(plan_result, ensure_ascii=False)}")
+            raise HTTPException(status_code=500, detail="生成重写计划失败，已记录原始响应")
+
+        rewrite_plans = plan_result['rewrite_plan']
+        
+        # 2. 并行重写每一章
+        def execute_chapter_rewrite(idx, plan):
+            orig_chapter = chapters[idx] if idx < len(chapters) else {}
+            chapter_num = plan.get('chapter_number', idx + 1)
+            
+            chapter_prompt = f"""你是顶级网文修改专家。请执行具体的章节重写。
+            
+**原章节内容 (第{chapter_num}章):**
+标题: {orig_chapter.get('title', '无')}
+正文:
+{orig_chapter.get('content', '无内容')}
+
+**重写计划要求:**
+新标题: {plan.get('new_title', '爆款标题')}
+具体修改指令: {plan.get('modifications', '全方位升级')}
+核心钩子: {plan.get('target_hook', '留悬念')}
+
+**重写规则:**
+1. 保持视角一致。
+2. 节奏极速，砍掉废话。
+3. 心理描写融入行动。
+4. 结尾必须卡在钩子上。
+
+直接输出重写后的章节正文，不要有任何说明。
+"""
+            try:
+                msg = [{"role": "user", "content": chapter_prompt}]
+                new_content = ai_client._call_api(msg, temperature=0.85, max_tokens=4000)
+                return {
+                    "chapter_number": chapter_num,
+                    "title": plan.get('new_title', '新标题'),
+                    "content": new_content,
+                    "word_count": len(new_content)
+                }
+            except Exception as e:
+                print(f"重写章节 {chapter_num} 失败: {e}")
+                return None
+
+        # 并行执行
+        new_chapters = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [
+                executor.submit(execute_chapter_rewrite, i, plan)
+                for i, plan in enumerate(rewrite_plans)
+            ]
+            
+            for future in concurrent.futures.as_completed(futures):
+                res = future.result()
+                if res:
+                    new_chapters.append(res)
+        
+        # 排序
+        new_chapters.sort(key=lambda x: x['chapter_number'])
+        
+        if new_chapters:
+            return {"success": True, "data": {"chapters": new_chapters}}
+        else:
+            return {"success": False, "message": "所有章节重写均失败"}
+            
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        print(error_msg)
+        with open("rewrite_debug.log", "w") as f:
+            f.write(error_msg)
+        raise HTTPException(status_code=500, detail=f"重构失败: {str(e)}")
 
 
 if __name__ == "__main__":

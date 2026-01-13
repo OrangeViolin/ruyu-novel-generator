@@ -6,44 +6,81 @@
 }
 
 :root {
-    --primary-color: #6366f1;
-    --primary-hover: #4f46e5;
+    --primary-color: #008099;
+    --primary-hover: #006b80;
     --secondary-color: #64748b;
     --success-color: #10b981;
     --danger-color: #ef4444;
-    --background: #f8fafc;
-    --surface: #ffffff;
-    --border: #e2e8f0;
+    --background: transparent;
+    --surface: rgba(255, 255, 255, 0.75);
+    --border: rgba(255, 255, 255, 0.2);
     --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --text-secondary: #475569;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.3);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: var(--background);
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: url('/static/assets/bg.png') no-repeat center center fixed;
+    background-size: cover;
     color: var(--text-primary);
     line-height: 1.6;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* 导航栏 */
 .navbar {
     background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 2rem;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0.75rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
 }
 
-.nav-brand h1 {
-    font-size: 1.5rem;
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-brand .logo {
+    height: 45px;
+    width: auto;
+}
+
+.brand-text h1 {
+    font-size: 1.25rem;
     color: var(--primary-color);
+    line-height: 1.1;
+    font-weight: 800;
+}
+
+.brand-slogan {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .nav-links {
@@ -201,8 +238,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .group-title {
@@ -507,7 +551,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* 投稿管理样式 */
@@ -574,12 +620,35 @@ body {
     font-weight: 500;
 }
 
-.submission-status.pending { background: #fef3c7; color: #92400e; }
-.submission-status.submitted { background: #dbeafe; color: #1e40af; }
-.submission-status.under_review { background: #e9d5ff; color: #6b21a8; }
-.submission-status.approved { background: #d1fae5; color: #065f46; }
-.submission-status.rejected { background: #fee2e2; color: #991b1b; }
-.submission-status.published { background: #d1fae5; color: #059669; }
+.submission-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.submission-status.submitted {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.submission-status.under_review {
+    background: #e9d5ff;
+    color: #6b21a8;
+}
+
+.submission-status.approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.submission-status.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.submission-status.published {
+    background: #d1fae5;
+    color: #059669;
+}
 
 .submission-actions {
     display: flex;
@@ -618,6 +687,7 @@ body {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2101,6 +2171,7 @@ input[type="file"]::file-selector-button:hover {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2600,8 +2671,15 @@ input[type="file"]::file-selector-button:hover {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .agent-card-body {
@@ -2762,12 +2840,204 @@ input[type="file"]::file-selector-button:hover {
 
 /* 脉冲动画 */
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.8;
         transform: scale(1.1);
     }
+}
+
+/* ========== AI 审稿助手样式 ========== */
+.review-content {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+    min-height: 400px;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.review-report-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #f1f5f9;
+}
+
+.grade-badge {
+    user-select: none;
+}
+
+/* 审稿中的动画 */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.report-body h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-top: 2rem !important;
+}
+
+.report-body strong {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+/* 如鱼特色：灵感鱼缸 */
+.aquarium {
+    position: fixed;
+    right: 20px;
+    top: 100px;
+    width: 200px;
+    height: calc(100vh - 120px);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.aquarium-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.aquarium-header h4 {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.aquarium-header p {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.bubble-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 气泡样式 */
+.bubble {
+    position: absolute;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(0, 188, 212, 0.4));
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #004b5a;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+    backdrop-filter: blur(2px);
+    word-break: break-all;
+    overflow: hidden;
+    line-height: 1.2;
+}
+
+.bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
+    z-index: 10;
+}
+
+.bubble:active {
+    transform: scale(0.95);
+}
+
+/* 气泡漂浮动画 */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+    }
+
+    25% {
+        transform: translateY(-20px) translateX(10px);
+    }
+
+    50% {
+        transform: translateY(-40px) translateX(-10px);
+    }
+
+    75% {
+        transform: translateY(-20px) translateX(10px);
+    }
+}
+
+/* 气泡喂入动画 */
+@keyframes feed {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.1) translate(-200px, 0);
+        opacity: 0;
+    }
+}
+
+.bubble.feeding {
+    animation: feed 0.5s forwards ease-in;
+}
+
+/* 针对主内容的调整，留出鱼缸空间 */
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    padding-right: 240px;
+    /* 为侧边鱼缸留出空间 */
+}
+
+/* 全局容器玻璃化 */
+.panel-card,
+.tab-content,
+.step-content,
+.settings-section,
+.modal-content {
+    background: var(--surface) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow-lg) !important;
 }

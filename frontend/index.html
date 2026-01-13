@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网文生成工具</title>
+    <title>如鱼写作 - 如鱼得水，丝滑创作</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%236366f1'/><stop offset='100%' style='stop-color:%234f46e5'/></linearGradient></defs><rect width='32' height='32' rx='6' fill='url(%23grad)'/><text x='16' y='22' font-family='Arial' font-size='18' font-weight='bold' fill='white' text-anchor='middle'>✍️</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css?v=9">
@@ -15,85 +15,31 @@
         <!-- 顶部导航 -->
         <nav class="navbar">
             <div class="nav-brand">
-                <h1>网文生成工具</h1>
+                <img src="/static/assets/logo.png" alt="如鱼写作" class="logo">
+                <div class="brand-text">
+                    <h1>如鱼写作</h1>
+                    <span class="brand-slogan">如鱼得水，丝滑创作</span>
+                </div>
             </div>
             <div class="nav-links">
-                <button class="nav-btn" data-tab="materials">📚 素材库</button>
-                <button class="nav-btn" data-tab="agents">🤖 AI智能体</button>
-                <button class="nav-btn" data-tab="channel-agents">📰 渠道智能体</button>
-                <button class="nav-btn" data-tab="inspiration">💡 创作灵感助手</button>
                 <button class="nav-btn" data-tab="short-story">📝 短故事助手</button>
-                <button class="nav-btn" data-tab="collaborative">🤝 协作写作</button>
-                <button class="nav-btn" data-tab="generator">生成器</button>
-                <button class="nav-btn" data-tab="projects">我的项目</button>
-                <button class="nav-btn" data-tab="submissions">投稿管理</button>
-                <button class="nav-btn" data-tab="examples">例文拆解</button>
+                <button class="nav-btn" data-tab="inspiration">💡 创作灵感助手</button>
             </div>
         </nav>
 
         <!-- 主内容区 -->
         <main class="main-content">
-            <!-- 素材库标签页 -->
-            <div id="tab-materials" class="tab-content">
-                <div class="materials-panel">
-                    <div class="panel-header">
-                        <h2>📚 参考素材库（写同款）</h2>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" onclick="showUploadModal()">+ 上传素材</button>
-                        </div>
-                    </div>
-
-                    <!-- 筛选栏 -->
-                    <div class="material-filters">
-                        <select id="filter-content-type" onchange="loadMaterials()">
-                            <option value="">全部类型</option>
-                            <option value="intro">导语</option>
-                            <option value="outline">大纲</option>
-                            <option value="analysis">拆解笔记</option>
-                            <option value="full">完整小说</option>
-                        </select>
-                        <select id="filter-genre" onchange="loadMaterials()">
-                            <option value="">全部题材</option>
-                            <option value="世情文">世情文</option>
-                            <option value="追妻火葬场">追妻火葬场</option>
-                            <option value="豪门恩怨">豪门恩怨</option>
-                            <option value="虐恋">虐恋</option>
-                        </select>
-                    </div>
-
-                    <!-- 素材列表 -->
-                    <div id="materials-grid" class="materials-grid">
-                        <p class="empty-state">加载中...</p>
-                    </div>
+            <!-- 灵感鱼缸 (Floating Bubbles) -->
+            <aside id="inspiration-aquarium" class="aquarium">
+                <div class="aquarium-header">
+                    <h4>🐟 灵感鱼缸</h4>
+                    <p>点击气泡喂入灵感</p>
                 </div>
-            </div>
-
-            <!-- AI智能体标签页 -->
-            <div id="tab-agents" class="tab-content active">
-                <div class="agents-panel">
-                    <div class="panel-header">
-                        <h2>🤖 AI智能体</h2>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" onclick="showCreateAgentModal()">+ 创建智能体</button>
-                        </div>
-                    </div>
-
-                    <!-- 分类筛选 -->
-                    <div class="agent-filters">
-                        <button class="filter-btn active" data-category="all">全部</button>
-                        <button class="filter-btn" data-category="intro">导语生成</button>
-                        <button class="filter-btn" data-category="outline">大纲生成</button>
-                        <button class="filter-btn" data-category="character">人物生成</button>
-                        <button class="filter-btn" data-category="chapter">章节生成</button>
-                        <button class="filter-btn" data-category="custom">自定义</button>
-                    </div>
-
-                    <!-- 智能体列表 -->
-                    <div id="agents-grid" class="agents-grid">
-                        <p class="empty-state">加载中...</p>
-                    </div>
+                <div id="bubble-container" class="bubble-container">
+                    <!-- 气泡将由JS动态生成 -->
                 </div>
-            </div>
+            </aside>
+
 
             <!-- 创作灵感助手标签页 -->
             <div id="tab-inspiration" class="tab-content">
@@ -277,7 +223,7 @@
             </div>
 
             <!-- 短故事助手标签页 -->
-            <div id="tab-short-story" class="tab-content">
+            <div id="tab-short-story" class="tab-content active">
                 <div class="inspiration-panel">
                     <div class="panel-header">
                         <h2>📝 短故事创作助手</h2>
@@ -309,6 +255,11 @@
                         <div class="step" data-step="5">
                             <div class="step-number">5</div>
                             <div class="step-label">一键成文</div>
+                        </div>
+                        <div class="step-arrow">→</div>
+                        <div class="step" data-step="6">
+                            <div class="step-number">6</div>
+                            <div class="step-label">AI审稿</div>
                         </div>
                     </div>
 
@@ -528,1357 +479,518 @@
                         </div>
                         <div class="form-actions" id="short-story-step-5-actions" style="display: none;">
                             <button type="button" class="btn" onclick="exportShortStory()">📥 导出小说</button>
+                            <button type="button" class="btn btn-success" onclick="startShortStoryReview()">🔍
+                                提交AI审稿</button>
                             <button type="button" class="btn btn-primary" onclick="resetShortStory()">🔄 重新创作</button>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- 协作写作标签页 -->
-            <div id="tab-collaborative" class="tab-content">
-                <div class="collaborative-panel">
-                    <div class="panel-header">
-                        <h2>🤝 人机协作写作</h2>
-                        <div class="header-actions">
-                            <select id="current-project" style="margin-right: 10px; padding: 0.5rem;">
-                                <option value="">选择项目...</option>
-                            </select>
-                            <button class="btn btn-primary" onclick="showCreateProjectModal()">+ 新建项目</button>
-                        </div>
-                    </div>
-
-                    <!-- 项目概览 -->
-                    <div id="project-overview" class="project-overview" style="display: none;">
-                        <div class="overview-stats">
-                            <div class="stat-card">
-                                <h4>核心设定</h4>
-                                <p id="overview-theme">-</p>
-                            </div>
-                            <div class="stat-card">
-                                <h4>核心冲突</h4>
-                                <p id="overview-conflict">-</p>
-                            </div>
-                            <div class="stat-card">
-                                <h4>人机比例</h4>
-                                <p id="overview-ratio">-</p>
-                            </div>
-                            <div class="stat-card">
-                                <h4>字数</h4>
-                                <p><span id="overview-words">0</span> / <span id="overview-target">0</span></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 工作流程标签 -->
-                    <div class="workflow-tabs">
-                        <button class="workflow-tab active" data-step="characters">
-                            <span class="step-number">1</span>
-                            👥 人物设定
-                        </button>
-                        <button class="workflow-tab" data-step="outlines">
-                            <span class="step-number">2</span>
-                            📋 情节大纲
-                        </button>
-                        <button class="workflow-tab" data-step="chapters">
-                            <span class="step-number">3</span>
-                            📝 章节创作
-                        </button>
-                    </div>
-
-                    <!-- 步骤1: 人物设定 -->
-                    <div id="step-characters" class="workflow-step active">
+                    <!-- 步骤6: AI审稿 -->
+                    <div id="short-story-step-6" class="step-content" style="display: none;">
                         <div class="step-header">
-                            <h3>👥 人物设定</h3>
-                            <div class="step-actions">
-                                <button class="btn btn-secondary" onclick="showCreateCharacterModal()">+ 手动创建</button>
-                                <button class="btn btn-primary" onclick="showGenerateCharacterModal()">✨ AI辅助生成</button>
+                            <h3>🔍 第六步: AI 爆文审稿助手</h3>
+                            <p>深度诊断小说结构与情绪曲线,助你直达S级</p>
+                        </div>
+
+                        <div id="short-story-review-content" class="review-content">
+                            <!-- 审稿报告 -->
+                            <div class="loading-state">
+                                <p>⏳ AI主编正在深度审读中...</p>
                             </div>
                         </div>
-                        <div id="characters-grid" class="characters-grid">
-                            <p class="empty-state">请先选择一个项目，或创建新项目</p>
-                        </div>
-                    </div>
 
-                    <!-- 步骤2: 情节大纲 -->
-                    <div id="step-outlines" class="workflow-step" style="display: none;">
-                        <div class="step-header">
-                            <h3>📋 情节大纲</h3>
-                            <div class="step-actions">
-                                <button class="btn btn-primary" onclick="showCreateOutlineModal()">+ 新建大纲</button>
-                            </div>
-                        </div>
-                        <div id="outlines-list" class="outlines-list">
-                            <p class="empty-state">请先选择一个项目</p>
-                        </div>
-                    </div>
-
-                    <!-- 步骤3: 章节创作 -->
-                    <div id="step-chapters" class="workflow-step" style="display: none;">
-                        <div class="step-header">
-                            <h3>📝 章节创作</h3>
-                        </div>
-                        <div id="chapters-workspace" class="chapters-workspace">
-                            <p class="empty-state">请先创建情节大纲</p>
+                        <div class="form-actions" id="short-story-step-6-actions" style="display: none;">
+                            <button type="button" class="btn" onclick="goToShortStoryStep(5)">← 查看原文</button>
+                            <button type="button" class="btn btn-primary" onclick="showShortStoryRewriteModal()">✍️
+                                根据建议修改</button>
+                            <button type="button" class="btn btn-success" onclick="exportShortStory()">📥 导出最终稿</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 生成器标签页 -->
-            <div id="tab-generator" class="tab-content">
-                <div class="generator-panel">
-                    <h2>创建新小说</h2>
-                    <form id="generator-form">
-                        <div class="form-group">
-                            <label>主题</label>
-                            <input type="text" id="theme" placeholder="例如：被出轨后的华丽归来" required>
-                        </div>
 
-                        <div class="form-group">
-                            <label>情节类型</label>
-                            <select id="plot-type">
-                                <option value="shiqing">世情文</option>
-                                <option value="yanqing">言情向</option>
-                                <option value="fantique">反套路</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>情节元素（可多选）</label>
-                            <div id="elements-container">
-                                <!-- 世情文元素 -->
-                                <div class="element-group" id="group-shiqing">
-                                    <div class="group-title">💼 职场类</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="团建年会"> 团建年会</label>
-                                        <label><input type="checkbox" name="element" value="区别对待"> 区别对待</label>
-                                        <label><input type="checkbox" name="element" value="公开处刑"> 公开处刑</label>
-                                        <label><input type="checkbox" name="element" value="反杀打脸"> 反杀打脸</label>
-                                        <label><input type="checkbox" name="element" value="奇葩同事"> 奇葩同事</label>
-                                        <label><input type="checkbox" name="element" value="恶毒领导"> 恶毒领导</label>
-                                        <label><input type="checkbox" name="element" value="背锅"> 背锅</label>
-                                    </div>
-                                    <div class="group-title">👨‍👩‍👧‍👦 亲情类</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="强人设主角"> 强人设主角</label>
-                                        <label><input type="checkbox" name="element" value="家庭账单"> 家庭账单</label>
-                                        <label><input type="checkbox" name="element" value="AA清单"> AA清单</label>
-                                        <label><input type="checkbox" name="element" value="断亲"> 断亲</label>
-                                        <label><input type="checkbox" name="element" value="偏心"> 偏心</label>
-                                        <label><input type="checkbox" name="element" value="强占财产"> 强占财产</label>
-                                        <label><input type="checkbox" name="element" value="奇葩亲戚"> 奇葩亲戚</label>
-                                        <label><input type="checkbox" name="element" value="财产纠葛"> 财产纠葛</label>
-                                    </div>
-                                    <div class="group-title">💑 婚姻世情</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="吸血婚姻"> 吸血婚姻</label>
-                                        <label><input type="checkbox" name="element" value="AA制婚姻"> AA制婚姻</label>
-                                        <label><input type="checkbox" name="element" value="经济控制"> 经济控制</label>
-                                        <label><input type="checkbox" name="element" value="出轨"> 出轨</label>
-                                    </div>
-                                    <div class="group-title">🏠 日常生活</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="奇葩房东"> 奇葩房东</label>
-                                        <label><input type="checkbox" name="element" value="奇葩租客"> 奇葩租客</label>
-                                        <label><input type="checkbox" name="element" value="奇葩邻居"> 奇葩邻居</label>
-                                        <label><input type="checkbox" name="element" value="节日热点"> 节日热点</label>
-                                    </div>
-                                </div>
-                                <!-- 言情向元素 -->
-                                <div class="element-group" id="group-yanqing" style="display:none;">
-                                    <div class="group-title">💪 强人设女主</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="天生犟种"> 天生犟种</label>
-                                        <label><input type="checkbox" name="element" value="天生坏种"> 天生坏种</label>
-                                        <label><input type="checkbox" name="element" value="只谈钱"> 只谈钱</label>
-                                        <label><input type="checkbox" name="element" value="绿茶女"> 绿茶女</label>
-                                        <label><input type="checkbox" name="element" value="捞女"> 捞女</label>
-                                        <label><input type="checkbox" name="element" value="脚踏N条船"> 脚踏N条船</label>
-                                        <label><input type="checkbox" name="element" value="插足感情"> 插足感情</label>
-                                        <label><input type="checkbox" name="element" value="抢男人"> 抢男人</label>
-                                    </div>
-                                    <div class="group-title">🏮 古代言情</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="嫡庶换命"> 嫡庶换命</label>
-                                        <label><input type="checkbox" name="element" value="身份揭秘"> 身份揭秘</label>
-                                        <label><input type="checkbox" name="element" value="现场反杀"> 现场反杀</label>
-                                        <label><input type="checkbox" name="element" value="皇权更迭"> 皇权更迭</label>
-                                        <label><input type="checkbox" name="element" value="重生打脸"> 重生打脸</label>
-                                        <label><input type="checkbox" name="element" value="换嫁"> 换嫁</label>
-                                        <label><input type="checkbox" name="element" value="由妻降妾"> 由妻降妾</label>
-                                        <label><input type="checkbox" name="element" value="马甲打脸"> 马甲打脸</label>
-                                        <label><input type="checkbox" name="element" value="隐婚生子"> 隐婚生子</label>
-                                        <label><input type="checkbox" name="element" value="装穷装病"> 装穷装病</label>
-                                    </div>
-                                    <div class="group-title">💔 虐恋情深</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="追妻火葬场"> 追妻火葬场</label>
-                                        <label><input type="checkbox" name="element" value="心灰意冷"> 心灰意冷</label>
-                                        <label><input type="checkbox" name="element" value="久别重逢"> 久别重逢</label>
-                                        <label><input type="checkbox" name="element" value="替罪梗"> 替罪梗</label>
-                                        <label><input type="checkbox" name="element" value="真假千金"> 真假千金</label>
-                                        <label><input type="checkbox" name="element" value="换子梗"> 换子梗</label>
-                                        <label><input type="checkbox" name="element" value="听心声"> 听心声</label>
-                                    </div>
-                                    <div class="group-title">🎉 节日热点</div>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="跨年夜"> 跨年夜</label>
-                                        <label><input type="checkbox" name="element" value="地下恋情"> 地下恋情</label>
-                                        <label><input type="checkbox" name="element" value="当众社死"> 当众社死</label>
-                                        <label><input type="checkbox" name="element" value="身份错位"> 身份错位</label>
-                                        <label><input type="checkbox" name="element" value="高位新欢"> 高位新欢打脸</label>
-                                    </div>
-                                </div>
-                                <!-- 反套路元素 -->
-                                <div class="element-group" id="group-fantique" style="display:none;">
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" name="element" value="循环梗"> 循环梗</label>
-                                        <label><input type="checkbox" name="element" value="微悬疑"> 微悬疑</label>
-                                        <label><input type="checkbox" name="element" value="全新视角"> 全新视角</label>
-                                        <label><input type="checkbox" name="element" value="老梗翻新"> 老梗翻新</label>
-                                        <label><input type="checkbox" name="element" value="反转结局"> 反转结局</label>
-                                        <label><input type="checkbox" name="element" value="打破套路"> 打破套路</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>故事背景</label>
-                            <select id="background">
-                                <option value="现代都市">现代都市</option>
-                                <option value="职场办公室">职场办公室</option>
-                                <option value="豪门世家">豪门世家</option>
-                                <option value="娱乐圈">娱乐圈</option>
-                                <option value="古代宫廷">古代宫廷</option>
-                                <option value="古代江湖">古代江湖</option>
-                                <option value="港澳金牌播报员">港澳金牌播报员</option>
-                                <option value="都市家庭">都市家庭</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>目标字数</label>
-                            <input type="number" id="target-words" value="10000" min="5000" max="50000">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            <span class="btn-icon">✨</span>
-                            生成小说
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- 项目列表标签页 -->
-            <div id="tab-projects" class="tab-content">
-                <div class="projects-panel">
-                    <div class="panel-header">
-                        <h2>我的项目</h2>
-                        <button class="btn btn-secondary" onclick="refreshProjects()">刷新</button>
-                    </div>
-                    <div id="projects-list" class="projects-list">
-                        <!-- 项目列表将在这里动态加载 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 投稿管理标签页 -->
-            <div id="tab-submissions" class="tab-content">
-                <div class="submissions-panel">
-                    <div class="panel-header">
-                        <h2>投稿管理</h2>
-                        <button class="btn btn-primary" onclick="showCreateSubmissionModal()">+ 新建投稿</button>
-                    </div>
-
-                    <!-- 投稿列表 -->
-                    <div id="submissions-list" class="submissions-list">
-                        <!-- 投稿记录将在这里动态加载 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 投稿详情模态框 -->
-            <div id="submission-modal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 id="modal-title">新建投稿</h3>
-                        <button class="modal-close" onclick="closeSubmissionModal()">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="submission-form">
-                            <input type="hidden" id="submission-id">
-
-                            <div class="form-group">
-                                <label>选择项目</label>
-                                <select id="submission-project" required>
-                                    <option value="">请选择项目</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>投稿平台</label>
-                                <select id="submission-platform" required>
-                                    <option value="番茄">番茄</option>
-                                    <option value="七猫">七猫</option>
-                                    <option value="灯下">灯下</option>
-                                    <option value="风行故事会">风行故事会</option>
-                                    <option value="墨墨言情">墨墨言情</option>
-                                    <option value="爆米花">爆米花</option>
-                                    <option value="其他">其他</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>笔名</label>
-                                <input type="text" id="submission-penname" value="鱼头" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>书名</label>
-                                <input type="text" id="submission-bookname" placeholder="输入书名" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>主题</label>
-                                <input type="text" id="submission-theme" placeholder="例如：追妻火葬场" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>投稿状态</label>
-                                <select id="submission-status">
-                                    <option value="pending">待投稿</option>
-                                    <option value="submitted">已投稿</option>
-                                    <option value="under_review">审核中</option>
-                                    <option value="approved">已通过</option>
-                                    <option value="rejected">已拒绝</option>
-                                    <option value="published">已发布</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>投稿日期</label>
-                                <input type="date" id="submission-date">
-                            </div>
-
-                            <div class="form-group">
-                                <label>备注</label>
-                                <textarea id="submission-notes" rows="3" placeholder="备注信息..."></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="auto-generate" checked>
-                                    自动生成投稿标题和导语
-                                </label>
-                            </div>
-
-                            <div id="generated-content" style="display: none;">
-                                <div class="form-group">
-                                    <label>投稿标题（自动生成）</label>
-                                    <textarea id="submission-title" rows="2" readonly></textarea>
-                                    <button type="button" class="btn btn-sm btn-secondary"
-                                        onclick="copySubmissionTitle()">复制标题</button>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>邮件导语（自动生成）</label>
-                                    <textarea id="submission-intro" rows="5" readonly></textarea>
-                                    <button type="button" class="btn btn-sm btn-secondary"
-                                        onclick="copySubmissionIntro()">复制导语</button>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="closeSubmissionModal()">取消</button>
-                                <button type="submit" class="btn btn-primary">保存</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 渠道智能体创建/编辑模态框 -->
-            <div id="channel-agent-modal" class="modal" style="display: none;">
-                <div class="modal-content modal-large">
-                    <div class="modal-header">
-                        <h3 id="channel-agent-modal-title">创建渠道智能体</h3>
-                        <button class="modal-close" onclick="closeChannelAgentModal()">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="channel-agent-form">
-                            <input type="hidden" id="channel-agent-id">
-
-                            <!-- 基本信息 -->
-                            <div class="form-section">
-                                <h4>📋 基本信息</h4>
-                                <div class="form-group">
-                                    <label>智能体名称 <span class="required">*</span></label>
-                                    <input type="text" id="channel-agent-name" placeholder="例如：武志红公众号" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>描述</label>
-                                    <textarea id="channel-agent-description" rows="2"
-                                        placeholder="描述这个智能体的用途..."></textarea>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>渠道类型</label>
-                                        <select id="channel-agent-type">
-                                            <option value="emotion">💕 情感</option>
-                                            <option value="story">📖 故事</option>
-                                            <option value="parenting">👶 育儿</option>
-                                            <option value="career">💼 职场</option>
-                                            <option value="psychology">🧠 心理</option>
-                                            <option value="general">📝 通用</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>目标受众</label>
-                                        <input type="text" id="channel-agent-audience" placeholder="例如：25-35岁都市女性">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 渠道特点 -->
-                            <div class="form-section">
-                                <h4>🎯 渠道特点</h4>
-                                <div class="form-group">
-                                    <label>擅长话题</label>
-                                    <textarea id="channel-agent-topics" rows="2"
-                                        placeholder="例如：亲密关系,情感问题,婚姻经营,自我成长"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>文风要求</label>
-                                    <input type="text" id="channel-agent-tone" placeholder="例如：温暖、共情、细腻">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>字数要求</label>
-                                    <div class="form-row">
-                                        <input type="number" id="channel-agent-min-words" placeholder="最小字数">
-                                        <input type="number" id="channel-agent-max-words" placeholder="最大字数">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>特殊要求</label>
-                                    <textarea id="channel-agent-requirements" rows="2"
-                                        placeholder="例如：需要有真实案例,避免说教..."></textarea>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="closeChannelAgentModal()">取消</button>
-                                <button type="submit" class="btn btn-primary">保存</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 语料上传模态框 -->
-            <div id="corpus-upload-modal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>📤 上传训练语料</h3>
-                        <button class="modal-close" onclick="closeCorpusUploadModal()">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="corpus-upload-form">
-                            <input type="hidden" id="corpus-agent-id">
-
-                            <div class="form-group">
-                                <label>选择智能体</label>
-                                <input type="text" id="corpus-agent-name" readonly style="background: #f5f5f5;">
-                            </div>
-
-                            <div class="form-group">
-                                <label>上传语料文件 (.txt / .md)</label>
-                                <div class="file-upload-area" id="corpus-drop-zone">
-                                    <input type="file" id="corpus-files" accept=".txt,.md,text/markdown,text/plain"
-                                        multiple style="display: none;">
-                                    <div class="upload-prompt">
-                                        <p>📁 拖拽文件到此处或点击上传</p>
-                                        <p class="upload-hint">支持多个.txt和.md文件，建议上传10-50篇该渠道的范文</p>
-                                    </div>
-                                    <div id="corpus-file-list" class="file-list"></div>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="closeCorpusUploadModal()">取消</button>
-                                <button type="submit" class="btn btn-primary">开始训练</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 内容生成模态框 -->
-            <div id="content-generate-modal" class="modal" style="display: none;">
-                <div class="modal-content modal-large">
-                    <div class="modal-header">
-                        <h3>✨ 生成投稿内容</h3>
-                        <button class="modal-close" onclick="closeGenerateModal()">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="content-generate-form">
-                            <input type="hidden" id="generate-agent-id">
-
-                            <div class="form-group">
-                                <label>使用智能体</label>
-                                <input type="text" id="generate-agent-name" readonly style="background: #f5f5f5;">
-                            </div>
-
-                            <div class="form-group">
-                                <label>文章主题（可选）</label>
-                                <textarea id="generate-topic" rows="2"
-                                    placeholder="留空则由AI根据渠道风格自主推荐主题，也可以输入你想写的主题"></textarea>
-                                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">💡
-                                    建议留空，让AI根据该渠道的风格自主创作更合适的主题</p>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>目标项目</label>
-                                    <select id="generate-project" onchange="handleProjectSelectChange()">
-                                        <option value="">不保存到项目</option>
-                                        <option value="__new__">+ 新建项目</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>字数</label>
-                                    <input type="number" id="generate-word-count" placeholder="自动">
-                                </div>
-                            </div>
-
-                            <!-- 新建项目表单（默认隐藏） -->
-                            <div id="new-project-form"
-                                style="display: none; background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #0ea5e9;">
-                                <div class="form-group">
-                                    <label>新项目名称 <span class="required">*</span></label>
-                                    <input type="text" id="new-project-name" placeholder="输入新项目名称"
-                                        style="background: white;">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>额外要求</label>
-                                <textarea id="generate-requirements" rows="2"
-                                    placeholder="例如：需要包含具体的对话场景，要有反转..."></textarea>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="closeGenerateModal()">取消</button>
-                                <button type="button" class="btn btn-info" onclick="generateInspiration()"
-                                    id="generate-inspiration-btn">💡 AI生成灵感</button>
-                                <button type="button" class="btn btn-success" onclick="generateContent()"
-                                    id="generate-content-btn" disabled>✍️ AI生成内容</button>
-                            </div>
-                        </form>
-
-                        <!-- 灵感编辑区域 -->
-                        <div id="inspiration-editor" style="display: none; margin-top: 1.5rem;">
-                            <div class="form-section"
-                                style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #0ea5e9;">
-                                <h4 style="margin: 0 0 1rem 0; color: #0369a1;">💡 AI生成的灵感</h4>
-
-                                <div class="form-group">
-                                    <label>推荐主题</label>
-                                    <div id="inspiration-topic"
-                                        style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #f59e0b; font-weight: 500; color: #92400e;">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>标题建议</label>
-                                    <div id="inspiration-titles"
-                                        style="background: white; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;">
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>核心角度</label>
-                                    <textarea id="inspiration-angle" rows="2" style="background: white;"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>内容大纲</label>
-                                    <textarea id="inspiration-outline" rows="6" style="background: white;"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>关键元素</label>
-                                    <input type="text" id="inspiration-elements" style="background: white;">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>情绪弧线</label>
-                                    <textarea id="inspiration-emotional" rows="2" style="background: white;"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>创作要点</label>
-                                    <textarea id="inspiration-notes" rows="2" style="background: white;"></textarea>
-                                </div>
-
-                                <div class="form-actions" style="margin-top: 1rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="regenerateInspiration()">🔄
-                                        重新生成灵感</button>
-                                    <button type="button" class="btn btn-success" onclick="confirmInspiration()">✅
-                                        确认并生成内容</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 生成进度提示 -->
-                        <div id="generation-progress"
-                            style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; text-align: center;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">✨</div>
-                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;" id="progress-title">AI正在创作中...</h4>
-                            <p style="margin: 0.5rem 0; opacity: 0.9; font-size: 0.9rem;" id="generation-progress-text">
-                                正在分析主题和风格要求</p>
-                            <div
-                                style="margin-top: 1rem; background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
-                                <div id="generation-progress-bar"
-                                    style="height: 100%; background: white; border-radius: 3px; transition: width 0.5s ease; width: 0%;">
-                                </div>
-                            </div>
-                            <p style="margin: 0.8rem 0 0 0; opacity: 0.8; font-size: 0.85rem;" id="progress-time">预计需要
-                                30-60 秒，请稍候...</p>
-                        </div>
-
-                        <!-- 生成结果 -->
-                        <div id="generation-result" style="display: none; margin-top: 1.5rem;">
-                            <div class="form-section">
-                                <h4>📝 生成内容</h4>
-                                <div id="generated-content-display"
-                                    style="background: #f8fafc; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.8;">
-                                </div>
-                                <div class="form-actions" style="margin-top: 1rem;">
-                                    <button type="button" class="btn btn-secondary" onclick="copyGeneratedContent()">📋
-                                        复制内容</button>
-                                    <button type="button" class="btn btn-primary" onclick="saveToProject()">💾
-                                        保存到项目</button>
-                                    <button type="button" class="btn btn-secondary" onclick="regenerateContent()">🔄
-                                        重新生成</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 渠道智能体标签页 -->
-            <div id="tab-channel-agents" class="tab-content">
-                <div class="channel-agents-panel">
-                    <div class="panel-header">
-                        <h2>📰 渠道投稿智能体</h2>
-                        <p class="panel-desc">为不同公众号/渠道定制专属AI投稿助手</p>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" onclick="showCreateChannelAgentModal()">+ 创建智能体</button>
-                        </div>
-                    </div>
-
-                    <!-- 渠道类型筛选 -->
-                    <div class="channel-agent-filters">
-                        <button class="filter-btn active" data-type="all">全部</button>
-                        <button class="filter-btn" data-type="emotion">💕 情感</button>
-                        <button class="filter-btn" data-type="story">📖 故事</button>
-                        <button class="filter-btn" data-type="parenting">👶 育儿</button>
-                        <button class="filter-btn" data-type="career">💼 职场</button>
-                        <button class="filter-btn" data-type="psychology">🧠 心理</button>
-                        <button class="filter-btn" data-type="general">📝 通用</button>
-                    </div>
-
-                    <!-- 智能体列表 -->
-                    <div id="channel-agents-grid" class="channel-agents-grid">
-                        <p class="empty-state">加载中...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 例文拆解标签页 -->
-            <div id="tab-examples" class="tab-content">
-                <div class="examples-panel">
-                    <div class="panel-header">
-                        <h2>例文拆解</h2>
-                        <div class="header-actions">
-                            <button class="btn btn-primary" onclick="showExampleList()">← 例文列表</button>
-                            <button class="btn btn-secondary" onclick="startNewAnalysis()">+ 新建拆解</button>
-                        </div>
-                    </div>
-
-                    <!-- 例文列表 -->
-                    <div id="examples-list" class="examples-list">
-                        <!-- 例文列表将在这里动态加载 -->
-                    </div>
-
-                    <!-- 拆解界面（左右分栏） -->
-                    <div id="analysis-workspace" class="analysis-workspace" style="display: none;">
-                        <!-- 左侧：例文内容 -->
-                        <div class="analysis-left">
-                            <div class="panel-header">
-                                <h3>📖 例文内容</h3>
-                                <button class="btn btn-sm btn-secondary" onclick="fetchFromUrl()">从链接获取</button>
-                            </div>
-
-                            <div id="url-input-section"
-                                style="display: none; padding: 1rem; background: #f8fafc; border-radius: 8px; margin-bottom: 1rem;">
-                                <input type="text" id="example-url" placeholder="粘贴例文链接..."
-                                    style="width: 70%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
-                                <button class="btn btn-primary" onclick="fetchContentFromUrl()">获取内容</button>
-                                <button class="btn btn-secondary"
-                                    onclick="document.getElementById('url-input-section').style.display='none'">取消</button>
-                            </div>
-
-                            <div class="form-group">
-                                <label>例文标题</label>
-                                <input type="text" id="example-title" placeholder="输入例文标题">
-                            </div>
-
-                            <div class="form-group">
-                                <label>例文内容</label>
-                                <textarea id="example-content" rows="25"
-                                    placeholder="粘贴例文内容，或点击上方按钮从链接获取..."></textarea>
-                            </div>
-
-                            <div style="margin-top: 1rem;">
-                                <button class="btn btn-primary" onclick="analyzeWithAI()">✨ AI辅助拆解</button>
-                                <button class="btn btn-secondary" onclick="saveAnalysis()">💾 保存笔记</button>
-                            </div>
-                        </div>
-
-                        <!-- 右侧：拆解表单 -->
-                        <div class="analysis-right">
-                            <div class="panel-header">
-                                <h3>🔍 详细拆解</h3>
-                                <span style="font-size: 0.875rem; color: var(--text-secondary);">引导式学习笔记</span>
-                            </div>
-
-                            <div class="analysis-form">
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">1</span>
-                                        📖 文章名称
-                                    </h4>
-                                    <textarea id="analysis-title-field" rows="2"
-                                        placeholder="这篇文章的正式名称是什么？如果原标题不够吸引人，你会怎么重新命名？"></textarea>
-                                    <div class="section-hint">💡 提示：好的标题能吸引读者，包含冲突元素和悬念</div>
-                                </div>
-
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">2</span>
-                                        ⚔️ 核心冲突
-                                    </h4>
-                                    <textarea id="core-conflict-field" rows="4"
-                                        placeholder="这篇文章的核心冲突是什么？主要的对立面是谁？冲突的根源是什么？"></textarea>
-                                    <div class="section-hint">💡 提示：冲突是故事的引擎，明确矛盾双方和冲突本质</div>
-                                </div>
-
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">3</span>
-                                        🤫 信息差
-                                    </h4>
-                                    <textarea id="information-gap-field" rows="4"
-                                        placeholder="哪些信息在谁之间被隐瞒？信息差如何推动剧情？信息差的揭露时机和方式？"></textarea>
-                                    <div class="section-hint">💡 提示：信息差制造悬念，揭示真相创造高潮</div>
-                                </div>
-
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">4</span>
-                                        🎯 核心任务
-                                    </h4>
-                                    <textarea id="core-task-field" rows="3"
-                                        placeholder="主角或关键人物要达成什么目标？任务的紧迫性和重要性是什么？"></textarea>
-                                    <div class="section-hint">💡 提示：目标驱动行动，紧迫性制造张力</div>
-                                </div>
-
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">5</span>
-                                        👥 人设分析
-                                    </h4>
-                                    <textarea id="character-profile-field" rows="5"
-                                        placeholder="主要角色的性格特点、核心动机、关键行为和内心秘密是什么？"></textarea>
-                                    <div class="section-hint">💡 提示：立体的人设包含外在性格和内在动机的冲突</div>
-                                </div>
-
-                                <div class="analysis-section">
-                                    <h4 class="section-title">
-                                        <span class="section-number">6</span>
-                                        📝 学习笔记
-                                    </h4>
-                                    <textarea id="notes-field" rows="4" placeholder="你的学习心得、借鉴点、可以应用的技巧..."></textarea>
-                                    <div class="section-hint">💡 提示：记录你的思考和收获，形成自己的创作方法论</div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>标签</label>
-                                    <input type="text" id="example-tags" placeholder="用逗号分隔，如：世情文,追妻火葬场">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 编辑器标签页 -->
-            <div id="tab-editor" class="tab-content">
-                <div class="editor-panel">
-                    <div class="editor-header">
-                        <button class="btn btn-secondary" onclick="backToProjects()">← 返回</button>
-                        <h2 id="editor-title">小说编辑器</h2>
-                        <div class="editor-actions">
-                            <button class="btn btn-secondary" onclick="saveProject()">保存</button>
-                            <button class="btn btn-secondary" onclick="exportProject()">导出</button>
-                            <button class="btn btn-primary" onclick="togglePreview()">预览</button>
-                        </div>
-                    </div>
-
-                    <div class="editor-container">
-                        <!-- 章节卡片列表 -->
-                        <div class="chapters-sidebar">
-                            <h3>章节</h3>
-                            <div id="chapters-list" class="chapters-list">
-                                <!-- 章节卡片将在这里动态加载 -->
-                            </div>
-                        </div>
-
-                        <!-- 编辑区域 -->
-                        <div class="editor-main">
-                            <div class="chapter-info">
-                                <input type="text" id="chapter-title" placeholder="章节标题">
-                                <div class="word-count">字数: <span id="word-count">0</span></div>
-                            </div>
-                            <textarea id="chapter-content" placeholder="在此编辑章节内容..."></textarea>
-                            <div class="editor-tools">
-                                <button class="btn btn-sm" onclick="polishContent()">✨ AI润色</button>
-                                <button class="btn btn-sm" onclick="analyzePlot()">📊 分析情节</button>
-                                <button class="btn btn-sm" onclick="continueWrite()">➡️ 续写</button>
-                            </div>
-                        </div>
-
-                        <!-- 预览区域 -->
-                        <div id="preview-panel" class="preview-panel" style="display: none;">
-                            <div class="preview-content" id="preview-content"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- 协作写作模态框 -->
-        <!-- 创建项目模态框 -->
-        <div id="create-project-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>创建新项目</h3>
-                    <button class="modal-close" onclick="closeModal('create-project-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <!-- AI生成选项 -->
-                    <div
-                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; color: white;">
-                        <h4 style="margin-bottom: 1rem;">✨ AI全自动生成设定（推荐）</h4>
-                        <p style="margin-bottom: 1rem; font-size: 0.9rem; opacity: 0.9;">AI将为您生成一套完整且独特的小说设定，包括：</p>
-                        <ul style="margin-bottom: 1rem; padding-left: 1.5rem; font-size: 0.875rem; opacity: 0.9;">
-                            <li>狗血且独特的核心冲突</li>
-                            <li>出人意料的人物关系</li>
-                            <li>惊人的秘密和反转</li>
-                            <li>完整的章节大纲</li>
-                        </ul>
-                        <button type="button" class="btn" style="background: white; color: #667eea; font-weight: 600;"
-                            onclick="aiGenerateFullProject()">
-                            🎲 AI生成全套设定
-                        </button>
-                        <div id="ai-generating-status"
-                            style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.2); border-radius: 8px; font-size: 0.875rem;">
-                            🤖 AI正在疯狂构思中，请稍候...
-                        </div>
-                    </div>
-
-                    <div style="text-align: center; margin: 1.5rem 0; position: relative;">
-                        <span
-                            style="background: var(--surface); padding: 0 1rem; color: var(--text-secondary); z-index: 1; position: relative;">或者手动填写</span>
-                        <div
-                            style="position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--border); z-index: 0;">
-                        </div>
-                    </div>
-
-                    <form id="create-project-form">
-                        <div class="form-group">
-                            <label>项目名称</label>
-                            <input type="text" id="project-name" required placeholder="例如：家庭财产纠纷">
-                        </div>
-                        <div class="form-group">
-                            <label>主题</label>
-                            <input type="text" id="project-theme" placeholder="例如：二舅转移财产，主角反击">
-                        </div>
-                        <div class="form-group">
-                            <label>背景设定</label>
-                            <select id="project-background">
-                                <option value="现代都市">现代都市</option>
-                                <option value="港澳">港澳</option>
-                                <option value="金牌播报员">金牌播报员</option>
-                                <option value="都市家庭">都市家庭</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>目标字数</label>
-                            <input type="number" id="project-target-words" value="10000">
-                        </div>
-                        <div class="form-group">
-                            <label>题材类型</label>
-                            <input type="text" id="project-genre" placeholder="例如：世情文">
-                        </div>
-                        <div class="form-group">
-                            <label>核心冲突</label>
-                            <textarea id="project-core-conflict" rows="3" placeholder="主要矛盾是什么？"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>核心任务</label>
-                            <textarea id="project-core-task" rows="2" placeholder="主角要达成什么目标？"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary"
-                                onclick="closeModal('create-project-modal')">取消</button>
-                            <button type="submit" class="btn btn-primary">创建</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI生成预览模态框 -->
-        <div id="ai-preview-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 900px;">
-                <div class="modal-header">
-                    <h3>🎲 AI生成结果预览</h3>
-                    <button class="modal-close" onclick="closeModal('ai-preview-modal')">✕</button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div id="ai-preview-content"></div>
-                    <div class="form-actions" style="margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('ai-preview-modal')">取消</button>
-                        <button type="button" class="btn btn-primary" onclick="confirmCreateProject()">✅
-                            确认并创建项目</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 创建人物模态框 -->
-        <div id="create-character-modal" class="modal" style="display: none;">
-            <div class="modal-content modal-large">
-                <div class="modal-header">
-                    <h3>创建角色卡（星月风格：最小化原则）</h3>
-                    <button class="modal-close" onclick="closeModal('create-character-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <form id="create-character-form">
-                        <!-- 核心设定区（必填） -->
-                        <div class="settings-section">
-                            <h4>⭐ 核心设定（必填 - 最小化原则）</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>姓名</label>
-                                    <input type="text" id="char-name" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>角色类型</label>
-                                    <select id="char-role">
-                                        <option value="protagonist">主角</option>
-                                        <option value="antagonist">反派</option>
-                                        <option value="supporting">配角</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>重要程度</label>
-                                    <select id="char-importance">
-                                        <option value="core">核心角色</option>
-                                        <option value="important">重要角色</option>
-                                        <option value="supporting">一般配角</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>⚡ 核心身份（一句话）</label>
-                                <textarea id="char-core-identity" rows="1" required
-                                    placeholder="例如：现代程序员穿越到古代的书生"></textarea>
-                                <small class="text-muted">用一句话描述角色的本质身份</small>
-                            </div>
-                            <div class="form-group">
-                                <label>⚡ 核心性格（3个关键词）</label>
-                                <input type="text" id="char-core-personality" required placeholder="例如：理性,技术宅,正义感">
-                                <small class="text-muted">用逗号分隔的3个关键词概括</small>
-                            </div>
-                            <div class="form-group">
-                                <label>⚡ 核心动机（一句话）</label>
-                                <textarea id="char-core-motivation" rows="1" required
-                                    placeholder="例如：利用现代知识改变古代科技落后"></textarea>
-                                <small class="text-muted">驱动角色行动的核心动力</small>
-                            </div>
-                        </div>
-
-                        <!-- 缺陷设定（影响剧情的关键） -->
-                        <div class="settings-section">
-                            <h4>🎭 性格缺陷（影响剧情的关键）</h4>
-                            <div class="form-group">
-                                <label>缺陷描述</label>
-                                <textarea id="char-flaw" rows="2" placeholder="例如：过于理性，不懂人情世故"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>缺陷带来的后果</label>
-                                <textarea id="char-flaw-consequence" rows="2"
-                                    placeholder="例如：在官场屡屡碰壁，但也因此结交了一些真正赏识他的朋友"></textarea>
-                                <small class="text-muted">这个缺陷如何影响剧情发展</small>
-                            </div>
-                        </div>
-
-                        <!-- 详细设定（可选） -->
-                        <div class="settings-section">
-                            <h4>📝 详细设定（可选）</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>年龄</label>
-                                    <input type="number" id="char-age">
-                                </div>
-                                <div class="form-group">
-                                    <label>性别</label>
-                                    <select id="char-gender">
-                                        <option value="男">男</option>
-                                        <option value="女">女</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>外貌特征</label>
-                                <textarea id="char-appearance" rows="2" placeholder="3-5个关键词，例如：高大,剑眉星目,书卷气"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>对话示例</label>
-                                <textarea id="char-speech-example" rows="3" placeholder="具体对话示例，AI会模仿这个风格"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>背景故事</label>
-                                <textarea id="char-background" rows="3"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>成长方向</label>
-                                <textarea id="char-growth" rows="2" placeholder="角色在故事中的成长变化方向"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- 状态管理 -->
-                        <div class="settings-section">
-                            <h4>📍 状态管理</h4>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>当前状态</label>
-                                    <select id="char-status">
-                                        <option value="active">活跃</option>
-                                        <option value="inactive">已下线</option>
-                                        <option value="pending">待出场</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>当前位置</label>
-                                    <input type="text" id="char-location" placeholder="例如：京城,尚书府">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>关系补充</label>
-                                <textarea id="char-relationship-notes" rows="2"
-                                    placeholder="临时关系信息，优先级高于固定设定"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- 原有字段（隐藏，保持兼容） -->
-                        <input type="hidden" id="char-secret" value="">
-                        <input type="hidden" id="char-habits" value="">
-                        <input type="hidden" id="char-triggers" value="">
-                        <input type="hidden" id="char-speech" value="">
-                        <input type="hidden" id="char-motivation" value="">
-
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary"
-                                onclick="closeModal('create-character-modal')">取消</button>
-                            <button type="submit" class="btn btn-primary">创建角色卡</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- AI生成人物模态框 -->
-        <div id="generate-character-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>AI辅助生成人物</h3>
-                    <button class="modal-close" onclick="closeModal('generate-character-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <form id="generate-character-form">
-                        <div class="form-group">
-                            <label>角色类型</label>
-                            <select id="gen-char-role">
-                                <option value="antagonist">反派</option>
-                                <option value="supporting">配角</option>
-                                <option value="protagonist">主角</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>主题</label>
-                            <input type="text" id="gen-char-theme" placeholder="例如：家庭财产纠纷">
-                        </div>
-                        <div class="form-group">
-                            <label>必须包含的元素（逗号分隔）</label>
-                            <input type="text" id="gen-char-elements" placeholder="例如：心机深沉,表面温柔,善于伪装">
-                        </div>
-                        <div class="form-group">
-                            <label>参考描述（可选）</label>
-                            <textarea id="gen-char-reference" rows="2" placeholder="例如：像《知否》里的林小娘一样表面温柔"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary"
-                                onclick="closeModal('generate-character-modal')">取消</button>
-                            <button type="submit" class="btn btn-primary">✨ AI生成</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- 创建大纲模态框 -->
-        <div id="create-outline-modal" class="modal" style="display: none;">
-            <div class="modal-content modal-large">
-                <div class="modal-header">
-                    <h3>创建情节大纲</h3>
-                    <button class="modal-close" onclick="closeModal('create-outline-modal')">✕</button>
-                </div>
-                <div class="modal-body">
-                    <form id="create-outline-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>章节序号</label>
-                                <input type="number" id="outline-chapter" required>
-                            </div>
-                            <div class="form-group">
-                                <label>章节标题</label>
-                                <input type="text" id="outline-title" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>章节摘要</label>
-                            <textarea id="outline-summary" rows="2" required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>情节要点（每行一个）</label>
-                            <textarea id="outline-points" rows="5"
-                                placeholder="例如：&#10;主角在书房发现文件&#10;文件显示财产已被转移&#10;主角质问二舅"></textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>目标字数</label>
-                                <input type="number" id="outline-words" value="2000">
-                            </div>
-                            <div class="form-group">
-                                <label>重点元素（逗号分隔）</label>
-                                <input type="text" id="outline-focus" placeholder="例如：情绪钩子,强冲突">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>情绪弧线</label>
-                            <textarea id="outline-emotion" rows="2" placeholder="例如：从疑惑→震惊→愤怒→清醒"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>涉及人物（逗号分隔）</label>
-                            <input type="text" id="outline-chars" placeholder="例如：主角,二舅">
-                        </div>
-                        <div class="form-group">
-                            <label>备注</label>
-                            <textarea id="outline-notes" rows="2"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary"
-                                onclick="closeModal('create-outline-modal')">取消</button>
-                            <button type="submit" class="btn btn-primary">创建</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- 状态提示 -->
-        <div id="toast" class="toast"></div>
+    </div>
+    <div class="stat-card">
+        <h4>核心冲突</h4>
+        <p id="overview-conflict">-</p>
+    </div>
+    <div class="stat-card">
+        <h4>人机比例</h4>
+        <p id="overview-ratio">-</p>
+    </div>
+    <div class="stat-card">
+        <h4>字数</h4>
+        <p><span id="overview-words">0</span> / <span id="overview-target">0</span></p>
+    </div>
+    </div>
     </div>
 
-    <!-- 智能体执行模态框 -->
-    <div id="agent-execute-modal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 700px;">
+    <!-- 工作流程标签 -->
+    <div class="workflow-tabs">
+        <button class="workflow-tab active" data-step="characters">
+            <span class="step-number">1</span>
+            👥 人物设定
+        </button>
+        <button class="workflow-tab" data-step="outlines">
+            <span class="step-number">2</span>
+            📋 情节大纲
+        </button>
+        <button class="workflow-tab" data-step="chapters">
+            <span class="step-number">3</span>
+            📝 章节创作
+        </button>
+    </div>
+
+    <!-- 步骤1: 人物设定 -->
+    <div id="step-characters" class="workflow-step active">
+        <div class="step-header">
+            <h3>👥 人物设定</h3>
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="showCreateCharacterModal()">+ 手动创建</button>
+                <button class="btn btn-primary" onclick="showGenerateCharacterModal()">✨ AI辅助生成</button>
+            </div>
+        </div>
+        <div id="characters-grid" class="characters-grid">
+            <p class="empty-state">请先选择一个项目，或创建新项目</p>
+        </div>
+    </div>
+
+    <!-- 步骤2: 情节大纲 -->
+    <div id="step-outlines" class="workflow-step" style="display: none;">
+        <div class="step-header">
+            <h3>📋 情节大纲</h3>
+            <div class="step-actions">
+                <button class="btn btn-primary" onclick="showCreateOutlineModal()">+ 新建大纲</button>
+            </div>
+        </div>
+        <div id="outlines-list" class="outlines-list">
+            <p class="empty-state">请先选择一个项目</p>
+        </div>
+    </div>
+
+    <!-- 步骤3: 章节创作 -->
+    <div id="step-chapters" class="workflow-step" style="display: none;">
+        <div class="step-header">
+            <h3>📝 章节创作</h3>
+        </div>
+        <div id="chapters-workspace" class="chapters-workspace">
+            <p class="empty-state">请先创建情节大纲</p>
+        </div>
+    </div>
+    </div>
+    </div>
+
+
+
+
+
+
+
+    <!-- 投稿详情模态框 -->
+    <div id="submission-modal" class="modal" style="display: none;">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3 id="agent-execute-title">执行智能体</h3>
-                <button class="modal-close" onclick="closeModal('agent-execute-modal')">✕</button>
+                <h3 id="modal-title">新建投稿</h3>
+                <button class="modal-close" onclick="closeSubmissionModal()">✕</button>
             </div>
             <div class="modal-body">
-                <form id="agent-execute-form">
-                    <div id="agent-variables-container"></div>
-                    <div class="form-actions" style="margin-top: 1.5rem;">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('agent-execute-modal')">取消</button>
-                        <button type="submit" class="btn btn-primary">🚀 开始生成</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                <form id="submission-form">
+                    <input type="hidden" id="submission-id">
 
-    <!-- 版本对比模态框 -->
-    <div id="version-compare-modal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 1200px;">
-            <div class="modal-header">
-                <h3>📊 版本对比选择</h3>
-                <button class="modal-close" onclick="closeModal('version-compare-modal')">✕</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div id="versions-container"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 上传素材模态框 -->
-    <div id="upload-material-modal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3>📤 上传参考素材</h3>
-                <button class="modal-close" onclick="closeModal('upload-material-modal')">✕</button>
-            </div>
-            <div class="modal-body">
-                <form id="upload-material-form" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label>作品标题 *</label>
-                        <input type="text" id="material-title" required class="form-control">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>作者</label>
-                            <input type="text" id="material-author" class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label>来源</label>
-                            <input type="text" id="material-source" class="form-control" placeholder="番茄、七猫、晋江等">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>内容类型 *</label>
-                        <select id="material-content-type" required class="form-control">
-                            <option value="">请选择</option>
-                            <option value="intro">导语</option>
-                            <option value="outline">大纲</option>
-                            <option value="analysis">拆解笔记</option>
-                            <option value="full">完整小说</option>
+                        <label>选择项目</label>
+                        <select id="submission-project" required>
+                            <option value="">请选择项目</option>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label>上传文件 * (.txt, .docx, .pdf)</label>
-
-                        <!-- 方式1：点击选择 -->
-                        <div class="upload-methods">
-                            <div class="upload-method">
-                                <button type="button" class="btn btn-secondary"
-                                    onclick="document.getElementById('material-file').click()">
-                                    📁 选择多个文件
-                                </button>
-                                <button type="button" class="btn btn-secondary" onclick="showFolderUploadHelp()">
-                                    📂 拖拽文件夹上传
-                                </button>
-                            </div>
-                        </div>
-
-                        <input type="file" id="material-file" required accept=".txt,.docx,.doc,.pdf,.xlsx,.xls" multiple
-                            class="form-control" style="display: none;">
-
-                        <!-- 拖拽上传区域 -->
-                        <div id="drop-zone" class="drop-zone">
-                            <div class="drop-zone-content">
-                                <div class="drop-icon">📂</div>
-                                <p>拖拽文件夹或文件到此处</p>
-                                <p class="drop-hint">或点击上方按钮选择</p>
-                            </div>
-                        </div>
-
-                        <!-- 已选文件列表 -->
-                        <div id="selected-files-list" class="selected-files-list" style="display: none;">
-                            <div class="files-list-header">
-                                <h4>已选择 <span id="file-count">0</span> 个文件</h4>
-                                <button type="button" class="btn btn-sm btn-secondary"
-                                    onclick="clearSelectedFiles()">清空</button>
-                            </div>
-                            <div id="files-preview" class="files-preview"></div>
-                        </div>
-
-                        <small style="color: var(--text-secondary);">
-                            💡 支持批量上传：可以一次选择几十个文件
-                            <br>
-                            📂 拖拽上传：直接拖拽文件夹到上传区域
-                            <br>
-                            📊 支持格式：.txt、.docx、.pdf、.xlsx、.xls
-                        </small>
+                        <label>投稿平台</label>
+                        <select id="submission-platform" required>
+                            <option value="番茄">番茄</option>
+                            <option value="七猫">七猫</option>
+                            <option value="灯下">灯下</option>
+                            <option value="风行故事会">风行故事会</option>
+                            <option value="墨墨言情">墨墨言情</option>
+                            <option value="爆米花">爆米花</option>
+                            <option value="其他">其他</option>
+                        </select>
                     </div>
+
+                    <div class="form-group">
+                        <label>笔名</label>
+                        <input type="text" id="submission-penname" value="鱼头" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>书名</label>
+                        <input type="text" id="submission-bookname" placeholder="输入书名" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>主题</label>
+                        <input type="text" id="submission-theme" placeholder="例如：追妻火葬场" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>投稿状态</label>
+                        <select id="submission-status">
+                            <option value="pending">待投稿</option>
+                            <option value="submitted">已投稿</option>
+                            <option value="under_review">审核中</option>
+                            <option value="approved">已通过</option>
+                            <option value="rejected">已拒绝</option>
+                            <option value="published">已发布</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>投稿日期</label>
+                        <input type="date" id="submission-date">
+                    </div>
+
                     <div class="form-group">
                         <label>备注</label>
-                        <textarea id="material-notes" class="form-control" rows="2"></textarea>
+                        <textarea id="submission-notes" rows="3" placeholder="备注信息..."></textarea>
                     </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="auto-generate" checked>
+                            自动生成投稿标题和导语
+                        </label>
+                    </div>
+
+                    <div id="generated-content" style="display: none;">
+                        <div class="form-group">
+                            <label>投稿标题（自动生成）</label>
+                            <textarea id="submission-title" rows="2" readonly></textarea>
+                            <button type="button" class="btn btn-sm btn-secondary"
+                                onclick="copySubmissionTitle()">复制标题</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>邮件导语（自动生成）</label>
+                            <textarea id="submission-intro" rows="5" readonly></textarea>
+                            <button type="button" class="btn btn-sm btn-secondary"
+                                onclick="copySubmissionIntro()">复制导语</button>
+                        </div>
+                    </div>
+
                     <div class="form-actions">
-                        <button type="button" class="btn btn-secondary"
-                            onclick="closeModal('upload-material-modal')">取消</button>
-                        <button type="submit" class="btn btn-primary">上传并分析</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeSubmissionModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- 素材详情模态框 -->
-    <div id="material-detail-modal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 900px;">
+    <!-- 渠道智能体创建/编辑模态框 -->
+    <div id="channel-agent-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
             <div class="modal-header">
-                <h3 id="material-detail-title">素材详情</h3>
-                <button class="modal-close" onclick="closeModal('material-detail-modal')">✕</button>
+                <h3 id="channel-agent-modal-title">创建渠道智能体</h3>
+                <button class="modal-close" onclick="closeChannelAgentModal()">✕</button>
             </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div id="material-detail-content"></div>
-                <div class="form-actions" style="margin-top: 2rem;">
-                    <button type="button" class="btn btn-primary" onclick="writeSimilarFromDetail()">✨ 写同款</button>
-                    <button type="button" class="btn btn-secondary" onclick="findSimilarFromDetail()">🔍 找相似</button>
+            <div class="modal-body">
+                <form id="channel-agent-form">
+                    <input type="hidden" id="channel-agent-id">
+
+                    <!-- 基本信息 -->
+                    <div class="form-section">
+                        <h4>📋 基本信息</h4>
+                        <div class="form-group">
+                            <label>智能体名称 <span class="required">*</span></label>
+                            <input type="text" id="channel-agent-name" placeholder="例如：武志红公众号" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>描述</label>
+                            <textarea id="channel-agent-description" rows="2" placeholder="描述这个智能体的用途..."></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>渠道类型</label>
+                                <select id="channel-agent-type">
+                                    <option value="emotion">💕 情感</option>
+                                    <option value="story">📖 故事</option>
+                                    <option value="parenting">👶 育儿</option>
+                                    <option value="career">💼 职场</option>
+                                    <option value="psychology">🧠 心理</option>
+                                    <option value="general">📝 通用</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>目标受众</label>
+                                <input type="text" id="channel-agent-audience" placeholder="例如：25-35岁都市女性">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 渠道特点 -->
+                    <div class="form-section">
+                        <h4>🎯 渠道特点</h4>
+                        <div class="form-group">
+                            <label>擅长话题</label>
+                            <textarea id="channel-agent-topics" rows="2"
+                                placeholder="例如：亲密关系,情感问题,婚姻经营,自我成长"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>文风要求</label>
+                            <input type="text" id="channel-agent-tone" placeholder="例如：温暖、共情、细腻">
+                        </div>
+
+                        <div class="form-group">
+                            <label>字数要求</label>
+                            <div class="form-row">
+                                <input type="number" id="channel-agent-min-words" placeholder="最小字数">
+                                <input type="number" id="channel-agent-max-words" placeholder="最大字数">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>特殊要求</label>
+                            <textarea id="channel-agent-requirements" rows="2"
+                                placeholder="例如：需要有真实案例,避免说教..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeChannelAgentModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 语料上传模态框 -->
+    <div id="corpus-upload-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📤 上传训练语料</h3>
+                <button class="modal-close" onclick="closeCorpusUploadModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="corpus-upload-form">
+                    <input type="hidden" id="corpus-agent-id">
+
+                    <div class="form-group">
+                        <label>选择智能体</label>
+                        <input type="text" id="corpus-agent-name" readonly style="background: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>上传语料文件 (.txt / .md)</label>
+                        <div class="file-upload-area" id="corpus-drop-zone">
+                            <input type="file" id="corpus-files" accept=".txt,.md,text/markdown,text/plain" multiple
+                                style="display: none;">
+                            <div class="upload-prompt">
+                                <p>📁 拖拽文件到此处或点击上传</p>
+                                <p class="upload-hint">支持多个.txt和.md文件，建议上传10-50篇该渠道的范文</p>
+                            </div>
+                            <div id="corpus-file-list" class="file-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeCorpusUploadModal()">取消</button>
+                        <button type="submit" class="btn btn-primary">开始训练</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 内容生成模态框 -->
+    <div id="content-generate-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>✨ 生成投稿内容</h3>
+                <button class="modal-close" onclick="closeGenerateModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="content-generate-form">
+                    <input type="hidden" id="generate-agent-id">
+
+                    <div class="form-group">
+                        <label>使用智能体</label>
+                        <input type="text" id="generate-agent-name" readonly style="background: #f5f5f5;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>文章主题（可选）</label>
+                        <textarea id="generate-topic" rows="2" placeholder="留空则由AI根据渠道风格自主推荐主题，也可以输入你想写的主题"></textarea>
+                        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">💡
+                            建议留空，让AI根据该渠道的风格自主创作更合适的主题</p>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>目标项目</label>
+                            <select id="generate-project" onchange="handleProjectSelectChange()">
+                                <option value="">不保存到项目</option>
+                                <option value="__new__">+ 新建项目</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>字数</label>
+                            <input type="number" id="generate-word-count" placeholder="自动">
+                        </div>
+                    </div>
+
+                    <!-- 新建项目表单（默认隐藏） -->
+                    <div id="new-project-form"
+                        style="display: none; background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #0ea5e9;">
+                        <div class="form-group">
+                            <label>新项目名称 <span class="required">*</span></label>
+                            <input type="text" id="new-project-name" placeholder="输入新项目名称" style="background: white;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>额外要求</label>
+                        <textarea id="generate-requirements" rows="2" placeholder="例如：需要包含具体的对话场景，要有反转..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeGenerateModal()">取消</button>
+                        <button type="button" class="btn btn-info" onclick="generateInspiration()"
+                            id="generate-inspiration-btn">💡 AI生成灵感</button>
+                        <button type="button" class="btn btn-success" onclick="generateContent()"
+                            id="generate-content-btn" disabled>✍️ AI生成内容</button>
+                    </div>
+                </form>
+
+                <!-- 灵感编辑区域 -->
+                <div id="inspiration-editor" style="display: none; margin-top: 1.5rem;">
+                    <div class="form-section"
+                        style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 12px; border-left: 4px solid #0ea5e9;">
+                        <h4 style="margin: 0 0 1rem 0; color: #0369a1;">💡 AI生成的灵感</h4>
+
+                        <div class="form-group">
+                            <label>推荐主题</label>
+                            <div id="inspiration-topic"
+                                style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid #f59e0b; font-weight: 500; color: #92400e;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>标题建议</label>
+                            <div id="inspiration-titles"
+                                style="background: white; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.5rem;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>核心角度</label>
+                            <textarea id="inspiration-angle" rows="2" style="background: white;"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>内容大纲</label>
+                            <textarea id="inspiration-outline" rows="6" style="background: white;"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>关键元素</label>
+                            <input type="text" id="inspiration-elements" style="background: white;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>情绪弧线</label>
+                            <textarea id="inspiration-emotional" rows="2" style="background: white;"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>创作要点</label>
+                            <textarea id="inspiration-notes" rows="2" style="background: white;"></textarea>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 1rem;">
+                            <button type="button" class="btn btn-secondary" onclick="regenerateInspiration()">🔄
+                                重新生成灵感</button>
+                            <button type="button" class="btn btn-success" onclick="confirmInspiration()">✅
+                                确认并生成内容</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 生成进度提示 -->
+                <div id="generation-progress"
+                    style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; animation: pulse 1.5s infinite;">✨</div>
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;" id="progress-title">AI正在创作中...</h4>
+                    <p style="margin: 0.5rem 0; opacity: 0.9; font-size: 0.9rem;" id="generation-progress-text">
+                        正在分析主题和风格要求</p>
+                    <div
+                        style="margin-top: 1rem; background: rgba(255,255,255,0.2); height: 6px; border-radius: 3px; overflow: hidden;">
+                        <div id="generation-progress-bar"
+                            style="height: 100%; background: white; border-radius: 3px; transition: width 0.5s ease; width: 0%;">
+                        </div>
+                    </div>
+                    <p style="margin: 0.8rem 0 0 0; opacity: 0.8; font-size: 0.85rem;" id="progress-time">预计需要
+                        30-60 秒，请稍候...</p>
+                </div>
+
+                <!-- 生成结果 -->
+                <div id="generation-result" style="display: none; margin-top: 1.5rem;">
+                    <div class="form-section">
+                        <h4>📝 生成内容</h4>
+                        <div id="generated-content-display"
+                            style="background: #f8fafc; padding: 1rem; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.8;">
+                        </div>
+                        <div class="form-actions" style="margin-top: 1rem;">
+                            <button type="button" class="btn btn-secondary" onclick="copyGeneratedContent()">📋
+                                复制内容</button>
+                            <button type="button" class="btn btn-primary" onclick="saveToProject()">💾
+                                保存到项目</button>
+                            <button type="button" class="btn btn-secondary" onclick="regenerateContent()">🔄
+                                重新生成</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/static/js/app.js?v=12"></script>
-    <script src="/static/js/examples.js?v=3"></script>
-    <script src="/static/js/collaborative.js?v=9"></script>
-    <script src="/static/js/agents.js?v=1"></script>
-    <script src="/static/js/materials.js?v=1"></script>
-    <script src="/static/js/inspiration.js?v=1705021000"></script>
-    <script src="/static/js/short-story.js?v=2"></script>
-    <script src="/static/js/channel-agents.js?v=9"></script>
+
+    </main>
+
+
+    <!-- 短故事重写弹窗 -->
+    <div id="short-story-rewrite-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>✍️ 优化重构建议</h3>
+                <button class="modal-close" onclick="closeShortStoryRewriteModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                    AI将根据审稿报告调整故事结构。你也可以添加额外的修改要求：
+                </p>
+                <textarea id="short-story-rewrite-instruction" rows="4"
+                    placeholder="例如：稍微增加一点甜宠戏份 / 把第二章的冲突写得再剧烈一点... (可选)"
+                    style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color);"></textarea>
+            </div>
+            <div class="modal-footer"
+                style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-secondary" onclick="closeShortStoryRewriteModal()">取消</button>
+                <button class="btn btn-primary" onclick="executeShortStoryRewrite()">🚀 开始重构</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=9"></script>
+    <script src="/static/js/short-story.js?v=9"></script>
+    <script src="/static/js/inspiration.js?v=9"></script>
+    <script src="/static/js/ruyu.js?v=9"></script>
 </body>
 
 </html>

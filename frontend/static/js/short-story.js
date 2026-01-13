@@ -176,9 +176,16 @@ function displayShortStorySettings(data) {
         </div>
 
         <div class="settings-section" style="background: rgba(239, 68, 68, 0.05); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--danger-color);">
-            <h4>⚔️ 主要矛盾</h4>
+            <h4>⚔️ 主要矛盾与信息差</h4>
             <p>${escapeHtml(data.main_conflict || '未设置')}</p>
         </div>
+
+        ${data.viral_dna ? `
+        <div class="settings-section" style="background: rgba(16, 185, 129, 0.05); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--success-color);">
+            <h4>🚀 爆款核心 (Viral DNA)</h4>
+            <p>${escapeHtml(data.viral_dna)}</p>
+        </div>
+        ` : ''}
 
         <div class="settings-section">
             <h4>👥 极致人设</h4>
@@ -597,16 +604,155 @@ function exportShortStory() {
     }
 }
 
-// 重置并重新创作
-function resetShortStory() {
-    if (confirm('确定要重新开始创作吗?当前进度将丢失。')) {
-        shortStoryData = { step1: {}, step2: {}, step3: {}, step4: {}, step5: {} };
-        document.getElementById('short-story-form').reset();
-        document.getElementById('short-story-step-2-actions').style.display = 'none';
-        document.getElementById('short-story-step-3-actions').style.display = 'none';
-        document.getElementById('short-story-step-4-actions').style.display = 'none';
-        document.getElementById('short-story-step-5-actions').style.display = 'none';
-        goToShortStoryStep(1);
+// ------------------ 步骤6: AI审稿与迭代 ------------------
+
+// 提交AI审稿
+async function startShortStoryReview() {
+    const data = shortStoryData.step5;
+    if (!data || !data.chapters) {
+        showToast('暂无小说内容可供审稿', 'error');
+        return;
+    }
+
+    goToShortStoryStep(6);
+    const reviewContent = document.getElementById('short-story-review-content');
+    reviewContent.innerHTML = `
+        <div class="loading-state">
+            <div style="text-align: center;">
+                <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                <p>AI大主编正在深度审读中...</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">诊断结构、冲突、人设与卡点</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch('/api/short-story/review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: data.title,
+                intro: data.intro,
+                chapters: data.chapters,
+                settings: shortStoryData.step1
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            displayShortStoryReview(result.data);
+            document.getElementById('short-story-step-6-actions').style.display = 'flex';
+        } else {
+            reviewContent.innerHTML = `<p class="error">❌ 审稿失败: ${result.message}</p>`;
+        }
+    } catch (error) {
+        console.error('审稿请求失败:', error);
+        reviewContent.innerHTML = `<p class="error">❌ 网络请求失败，请稍后重试</p>`;
+    }
+}
+
+// 显示审稿结果
+function displayShortStoryReview(data) {
+    const container = document.getElementById('short-story-review-content');
+    const reportHtml = renderSimpleMarkdown(data.report);
+
+    // 评级颜色
+    const gradeColor = {
+        'S': '#f59e0b',
+        'A': '#10b981',
+        'B': '#3b82f6',
+        'C': '#ef4444'
+    }[data.grade] || '#6b7280';
+
+    container.innerHTML = `
+        <div class="review-report-card" style="position: relative;">
+            <div class="grade-badge" style="position: absolute; top: 10px; right: 10px; font-size: 2.5rem; font-weight: 800; color: ${gradeColor}; transform: rotate(10deg); opacity: 0.8; border: 4px solid ${gradeColor}; padding: 0 10px; border-radius: 8px;">
+                ${data.grade}
+            </div>
+            <div class="report-body" style="line-height: 1.6;">
+                ${reportHtml}
+            </div>
+        </div>
+    `;
+
+    // 保存审稿报告以便重写时引用
+    shortStoryData.lastReview = data.report;
+}
+
+// 简单的Markdown渲染器 (处理标题、加粗、列表、分割线)
+function renderSimpleMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/^# (.*$)/gim, '<h1 style="margin: 1.5rem 0 1rem; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 5px;">$1</h1>')
+        .replace(/^## (.*$)/gim, '<h2 style="margin: 1.2rem 0 0.8rem; border-left: 4px solid var(--primary-color); padding-left: 10px;">$1</h2>')
+        .replace(/^### (.*$)/gim, '<h3 style="margin: 1rem 0 0.5rem; color: var(--secondary-color);">$1</h3>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary-color);">$1</strong>')
+        .replace(/^\* (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+        .replace(/^- (.*$)/gim, '<li style="margin-left: 20px;">$1</li>')
+        .replace(/\n\n/g, '<br/>')
+        .replace(/^---$/gim, '<hr style="margin: 20px 0; border: none; border-top: 1px dashed var(--border-color);"/>');
+}
+
+// 重写弹窗控制
+function showShortStoryRewriteModal() {
+    document.getElementById('short-story-rewrite-modal').style.display = 'block';
+}
+
+function closeShortStoryRewriteModal() {
+    document.getElementById('short-story-rewrite-modal').style.display = 'none';
+    document.getElementById('short-story-rewrite-instruction').value = '';
+}
+
+// 执行重写
+async function executeShortStoryRewrite() {
+    const instruction = document.getElementById('short-story-rewrite-instruction').value.trim();
+    closeShortStoryRewriteModal();
+
+    const container = document.getElementById('short-story-review-content');
+    container.innerHTML = `
+        <div class="loading-state">
+            <div style="text-align: center;">
+                <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                <p>🚀 正在根据主编建议进行重构升级...</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">这通常需要 1-2 分钟，请耐心等待</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('short-story-step-6-actions').style.display = 'none';
+
+    try {
+        const response = await fetch('/api/short-story/rewrite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                story_data: shortStoryData.step5,
+                review_report: shortStoryData.lastReview,
+                instruction: instruction
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast('🎉 重构升级完成！', 'success');
+            // 更新当前小说内容
+            shortStoryData.step5.chapters = result.data.chapters;
+            shortStoryData.step5.total_words = result.data.chapters.reduce((sum, c) => sum + (c.word_count || 0), 0);
+
+            // 重新显示第5步的内容（更新后的）
+            displayShortStoryResult(shortStoryData.step5);
+
+            // 自动发起新一轮审稿
+            setTimeout(() => startShortStoryReview(), 1000);
+        } else {
+            showToast('重构失败: ' + result.message, 'error');
+            container.innerHTML = `<p class="error">❌ 重构失败: ${result.message}</p>`;
+            document.getElementById('short-story-step-6-actions').style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('重构请求失败:', error);
+        showToast('请求超时或网络错误', 'error');
+        container.innerHTML = `<p class="error">❌ 网络错误，请查阅日志并刷新重试</p>`;
+        document.getElementById('short-story-step-6-actions').style.display = 'flex';
     }
 }
 
