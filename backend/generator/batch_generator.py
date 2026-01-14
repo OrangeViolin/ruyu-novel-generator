@@ -258,6 +258,14 @@ class BatchGenerator:
     def _generate_short_story(self, task_id: int, params: Dict) -> Dict:
         """生成短篇故事（优化版：减少等待）"""
 
+        # 本地导入，避免循环依赖
+        from backend.api.app import (
+            generate_short_story_settings,
+            generate_short_story_outline,
+            generate_short_story_chapters,
+            generate_short_story_novel
+        )
+
         db = next(get_db())
 
         try:
@@ -269,7 +277,6 @@ class BatchGenerator:
                 db.commit()
 
             # 1. 生成设定
-            from backend.api.app import generate_short_story_settings
             settings_result = generate_short_story_settings(
                 genre=params.get("genre", "甜宠"),
                 perspective=params.get("perspective", "first"),
