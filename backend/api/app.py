@@ -5914,6 +5914,7 @@ async def generate_with_agent(agent_id: int, request: dict):
 
 # ========== 仿写生成系统 ==========
 
+from fastapi import UploadFile, File
 from backend.api.imitation_api import (
     ImitationGenerator,
     DeconstructionRequest,
@@ -5921,6 +5922,88 @@ from backend.api.imitation_api import (
     PreviewRequest,
     GenerationRequest
 )
+
+
+@app.post("/api/imitation/ocr")
+async def ocr_image(image: UploadFile = File(...)):
+    """OCR图片识别接口 - 使用OCR.space免费API"""
+    try:
+        import base64
+        import requests
+        import io
+
+        # 读取图片文件
+        image_content = await image.read()
+
+        # 转换为base64
+        image_base64 = base64.b64encode(image_content).decode('utf-8')
+
+        # 使用OCR.space免费API（无需key）
+        ocr_api_url = "https://api.ocr.space/parse/image"
+
+        # 准备请求数据
+        payload = {
+            'base64Image': f'data:image/png;base64,{image_base64}',
+            'language': 'chs',  # 中文识别
+            'isOverlayRequired': 'false',
+            'scale': 'true',
+            'detectOrientation': 'true',
+            'OCREngine': '2'  # 使用引擎2（更适合中文）
+        }
+
+        headers = {
+            'apikey': 'helloworld',  # OCR.space的免费key
+            'Content-Type': 'application/json'
+        }
+
+        print("正在调用OCR.space API...")
+        response = requests.post(ocr_api_url, json=payload, headers=headers, timeout=60)
+
+        print(f"OCR.space响应状态码: {response.status_code}")
+
+        if response.status_code == 200:
+            result = response.json()
+            print(f"OCR.space响应: {result}")
+
+            # 检查是否成功
+            if result.get('IsErroredOnProcessing', False):
+                error_msg = result.get('ErrorMessage', ['未知错误'])
+                return {
+                    "success": False,
+                    "message": f"OCR处理失败: {error_msg}"
+                }
+
+            # 提取识别的文字
+            parsed_results = result.get('ParsedResults', [])
+            if parsed_results and len(parsed_results) > 0:
+                extracted_text = parsed_results[0].get('ParsedText', '')
+
+                if extracted_text:
+                    # 清理文字（去除多余空格）
+                    extracted_text = '\n'.join(line.strip() for line in extracted_text.split('\n') if line.strip())
+
+                    return {
+                        "success": True,
+                        "text": extracted_text
+                    }
+
+            return {
+                "success": False,
+                "message": "未能从图片中识别出文字"
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"OCR API返回错误: {response.status_code} - {response.text}"
+            }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "message": f"OCR识别失败: {str(e)}"
+        }
 
 
 @app.post("/api/imitation/deconstruct")
@@ -6055,3 +6138,13 @@ async def list_imitation_projects():
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== 批量生成系统 ==========
+
+from backend.api.batch_api import create_batch_generation_api, register_quick_create_api, batch_generator
+from backend.database.models import BatchGenerationTask, GenerationTask
+
+# 注册批量生成API
+create_batch_generation_api(app)
+register_quick_create_api(app)

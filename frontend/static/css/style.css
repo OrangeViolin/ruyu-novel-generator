@@ -2999,60 +2999,19 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .aquarium-header {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    text-align: center;
     margin-bottom: 15px;
 }
 
-.aquarium-title {
-    text-align: center;
-}
-
-.aquarium-title h4 {
+.aquarium-header h4 {
     color: var(--primary-color);
     font-size: 0.9rem;
     margin-bottom: 4px;
 }
 
-.aquarium-title p {
+.aquarium-header p {
     font-size: 0.7rem;
     color: var(--text-secondary);
-}
-
-.genre-selector {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.genre-selector label {
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-}
-
-.genre-select {
-    flex: 1;
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    border: 1px solid rgba(0, 128, 153, 0.3);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.8);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.genre-select:hover {
-    border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.95);
-}
-
-.genre-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 128, 153, 0.1);
 }
 
 .bubble-container {
@@ -3300,5 +3259,75 @@ input[type="file"]::file-selector-button:hover {
 
 .hidden {
     display: none;
+}
+
+/* ========== 批量生成系统样式 ========== */
+.batch-generation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 状态标签样式 */
+.status-pending {
+    background: #f5f5f5;
+    color: #999;
+}
+
+.status-running {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-completed {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.status-failed {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* 批量任务卡片 */
+.batch-generation-container .panel-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 进度条动画 */
+@keyframes progressShine {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* 批量任务表格 */
+.batch-generation-container table {
+    font-size: 14px;
+}
+
+.batch-generation-container th {
+    font-weight: 600;
+    color: #333;
+}
+
+/* 题材复选框样式 */
+.batch-genre-checkbox:checked + label {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-color: #f5576c;
+}
+
+/* 按钮样式 */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 }

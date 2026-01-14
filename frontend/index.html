@@ -44,6 +44,7 @@
                 </div>
                 <button class="nav-btn" data-tab="short-story">📝 短故事助手</button>
                 <button class="nav-btn" data-tab="long-novel">📚 长故事助手</button>
+                <button class="nav-btn" data-tab="batch-generation">🚀 批量生成</button>
                 <button class="nav-btn" data-tab="imitation">✨ 仿写生成系统</button>
                 <button class="nav-btn" data-tab="inspiration">💡 创作灵感助手</button>
             </div>
@@ -54,24 +55,8 @@
             <!-- 灵感鱼缸 (Floating Bubbles) -->
             <aside id="inspiration-aquarium" class="aquarium">
                 <div class="aquarium-header">
-                    <div class="aquarium-title">
-                        <h4>🐟 灵感鱼缸</h4>
-                        <p>点击气泡喂入灵感</p>
-                    </div>
-                    <div class="genre-selector">
-                        <label for="bubble-genre-select">题材：</label>
-                        <select id="bubble-genre-select" class="genre-select">
-                            <option value="">随机</option>
-                            <option value="甜宠">💕 甜宠</option>
-                            <option value="悬疑">🔍 悬疑</option>
-                            <option value="大女主">👑 大女主</option>
-                            <option value="脑洞">🌀 脑洞</option>
-                            <option value="末世">🌍 末世</option>
-                            <option value="复仇">⚔️ 复仇</option>
-                            <option value="仙侠">⚔️ 仙侠</option>
-                            <option value="都市反转">🏙️ 都市反转</option>
-                        </select>
-                    </div>
+                    <h4>🐟 灵感鱼缸</h4>
+                    <p>点击气泡喂入灵感</p>
                 </div>
                 <div id="bubble-container" class="bubble-container">
                     <!-- 气泡将由JS动态生成 -->
@@ -853,6 +838,133 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 批量生成标签页 -->
+            <div id="tab-batch-generation" class="tab-content" style="display: none;">
+                <div class="batch-generation-container">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 10px;">
+                            <span style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                🚀 批量生成系统
+                            </span>
+                        </h2>
+                        <p style="color: #666;">同时生成多篇不同设定的文章，效率提升3-4倍！</p>
+                    </div>
+
+                    <!-- 快速创建批量任务 -->
+                    <div class="panel-card" style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">⚡ 快速批量生成</h3>
+
+                        <div class="form-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">任务名称</label>
+                            <input type="text" id="batch-task-name" placeholder="例如：我的第一波批量测试" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">故事创意（所有文章共用）</label>
+                            <textarea id="batch-summary" rows="4" placeholder="描述你的故事创意，例如：一个关于时间旅行的故事，主角意外获得了一个能够回到过去的手表..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">章节数</label>
+                                <input type="number" id="batch-chapter-count" value="8" min="1" max="20" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500;">目标字数</label>
+                                <input type="number" id="batch-target-words" value="22000" step="1000" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">选择要生成的题材（可多选）</label>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="甜宠" style="margin-right: 8px;"> 甜宠
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="悬疑" style="margin-right: 8px;"> 悬疑
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="大女主" style="margin-right: 8px;"> 大女主
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="科幻" style="margin-right: 8px;"> 科幻
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="末世" style="margin-right: 8px;"> 末世
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="复仇" style="margin-right: 8px;"> 复仇
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="脑洞" style="margin-right: 8px;"> 脑洞
+                                </label>
+                                <label style="display: flex; align-items: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                    <input type="checkbox" class="batch-genre-checkbox" value="仙侠" style="margin-right: 8px;"> 仙侠
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <button type="button" class="btn btn-primary" id="btn-start-batch" onclick="startBatchGeneration()" style="padding: 14px 40px; font-size: 16px;">
+                                🚀 开始批量生成
+                            </button>
+                            <p style="margin-top: 12px; color: #666; font-size: 14px;">
+                                <span id="selected-genres-count">已选择 0 个题材</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 当前批量任务状态 -->
+                    <div id="current-batch-task-panel" class="panel-card hidden" style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">📊 当前任务进度</h3>
+
+                        <div id="batch-progress-section">
+                            <div style="margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-weight: 500;">总体进度</span>
+                                    <span id="batch-progress-text">0%</span>
+                                </div>
+                                <div style="width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                                    <div id="batch-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%); transition: width 0.5s;"></div>
+                                </div>
+                            </div>
+
+                            <div id="batch-status-text" style="color: #666; margin-bottom: 16px;">等待开始...</div>
+
+                            <div style="display: flex; gap: 12px;">
+                                <button type="button" class="btn btn-secondary" onclick="refreshBatchProgress()" style="flex: 1;">🔄 刷新进度</button>
+                                <button type="button" class="btn btn-secondary" onclick="cancelBatchTask()" style="flex: 1;">⏹ 取消任务</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 子任务列表 -->
+                    <div id="sub-tasks-panel" class="panel-card hidden" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">📝 生成任务列表</h3>
+
+                        <div id="sub-tasks-list">
+                            <!-- 动态生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 历史批量任务 -->
+                    <div class="panel-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-bottom: 20px;">📚 历史批量任务</h3>
+
+                        <div style="margin-bottom: 16px;">
+                            <button type="button" class="btn btn-secondary" onclick="loadBatchTasksList()">🔄 刷新列表</button>
+                        </div>
+
+                        <div id="batch-tasks-history">
+                            <p style="color: #999; text-align: center; padding: 20px;">暂无历史任务</p>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
     </div>
@@ -1395,6 +1507,7 @@
     <script src="/static/js/short-story.js?v=9"></script>
     <script src="/static/js/long-novel.js?v=1"></script>
     <script src="/static/js/imitation.js?v=1"></script>
+    <script src="/static/js/batch-generation.js?v=1"></script>
     <script src="/static/js/app.js?v=9"></script>
 </body>
 

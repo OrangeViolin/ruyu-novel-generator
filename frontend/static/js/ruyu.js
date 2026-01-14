@@ -4,10 +4,8 @@
 
 const RuyuAquarium = {
     container: null,
-    genreSelect: null,
     bubbles: [],
     lastFocusedTextarea: null,
-    currentGenre: '',
 
     // 初始灵感数据
     initialInspirations: [
@@ -23,23 +21,23 @@ const RuyuAquarium = {
 
     async init() {
         this.container = document.getElementById('bubble-container');
-        this.genreSelect = document.getElementById('bubble-genre-select');
         if (!this.container) return;
 
         // 追踪最后聚焦的输入框
         this.trackFocus();
 
-        // 监听题材选择器变化
-        if (this.genreSelect) {
-            this.genreSelect.addEventListener('change', () => {
-                this.currentGenre = this.genreSelect.value;
-                this.refreshBubbles();
-            });
-            this.currentGenre = this.genreSelect.value;
-        }
-
         // 尝试从后端获取真实灵感
-        await this.fetchInspirations();
+        try {
+            const response = await fetch('/api/inspiration/bubbles');
+            const result = await response.json();
+            if (result.success && result.data && result.data.length > 0) {
+                this.initialInspirations = result.data;
+                console.log('获取灵感成功：', result.data.length, '条');
+            }
+        } catch (error) {
+            console.error('获取灵感气泡失败:', error);
+            // 失败时使用默认的保底数据
+        }
 
         // 初始化气泡
         this.initialInspirations.forEach((text, index) => {
@@ -48,51 +46,6 @@ const RuyuAquarium = {
 
         // 监听AI生成结果，以便添加新灵感（可选扩展）
         console.log('如鱼写作：灵感鱼缸已就绪');
-    },
-
-    /**
-     * 从后端获取灵感
-     * @param {string} genre 题材
-     */
-    async fetchInspirations(genre = null) {
-        const targetGenre = genre !== null ? genre : this.currentGenre;
-        try {
-            const url = targetGenre
-                ? `/api/inspiration/bubbles?genre=${encodeURIComponent(targetGenre)}`
-                : '/api/inspiration/bubbles';
-            const response = await fetch(url);
-            const result = await response.json();
-            if (result.success && result.data && result.data.length > 0) {
-                this.initialInspirations = result.data;
-                console.log(`获取灵感成功 (${result.genre || '随机'})：`, result.data.length, '条');
-            }
-        } catch (error) {
-            console.error('获取灵感气泡失败:', error);
-            // 失败时使用默认的保底数据
-        }
-    },
-
-    /**
-     * 刷新气泡（切换题材时使用）
-     */
-    async refreshBubbles() {
-        // 清除现有气泡
-        this.bubbles.forEach(b => b.element.remove());
-        this.bubbles = [];
-
-        // 获取新灵感
-        await this.fetchInspirations();
-
-        // 生成新气泡
-        this.initialInspirations.forEach((text, index) => {
-            setTimeout(() => this.spawnBubble(text), index * 300);
-        });
-
-        // 显示提示
-        const genreName = this.currentGenre || '随机';
-        if (typeof showToast === 'function') {
-            showToast(`已切换到 ${genreName} 题材`, 'success');
-        }
     },
 
     trackFocus() {
@@ -180,8 +133,16 @@ const RuyuAquarium = {
 
             // 如果剩余气泡不多，尝试重新从后端拉取一波
             if (this.bubbles.length < 5) {
-                await this.fetchInspirations();
-                newText = this.initialInspirations[Math.floor(Math.random() * this.initialInspirations.length)];
+                try {
+                    const response = await fetch('/api/inspiration/bubbles');
+                    const result = await response.json();
+                    if (result.success && result.data && result.data.length > 0) {
+                        this.initialInspirations = result.data;
+                        newText = this.initialInspirations[Math.floor(Math.random() * this.initialInspirations.length)];
+                    }
+                } catch (e) {
+                    console.error('补充灵感失败:', e);
+                }
             }
 
             this.spawnBubble(newText);

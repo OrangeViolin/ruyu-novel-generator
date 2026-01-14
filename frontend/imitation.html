@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿写生成系统 - 如鱼写作</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=1">
+    <style>
+        .imitation-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .step-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .step-status.pending {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+        .step-status.in-progress {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .step-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .analysis-result {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .analysis-result h4 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .analysis-result pre {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+
+        .generated-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 16px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="imitation-container">
+        <h1 style="text-align: center; margin-bottom: 30px;">
+            <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                AI仿写生成系统
+            </span>
+        </h1>
+
+        <!-- 阶段一：深度拆解 -->
+        <div class="step-card" id="step1">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <div class="step-title">深度拆解原文</div>
+                <div class="step-status pending" id="step1-status">待开始</div>
+            </div>
+
+            <div class="form-group">
+                <label>原文标题</label>
+                <input type="text" id="original-title" placeholder="请输入原文标题">
+            </div>
+
+            <div class="form-group">
+                <label>原文内容</label>
+                <textarea id="original-content" placeholder="请粘贴要仿写的原文内容，或点击下方按钮上传文件"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="uploadFile()">📁 上传文件</button>
+                <button class="btn btn-primary" id="btn-deconstruct" onclick="deconstructOriginal()">
+                    开始拆解
+                </button>
+            </div>
+
+            <input type="file" id="file-input" accept=".txt,.md" style="display: none;" onchange="handleFileUpload(event)">
+
+            <div class="analysis-result hidden" id="deconstruction-result">
+                <h4>拆解结果</h4>
+                <pre id="deconstruction-json"></pre>
+            </div>
+        </div>
+
+        <!-- 阶段二：配置新设定 -->
+        <div class="step-card" id="step2">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <div class="step-title">配置新设定</div>
+                <div class="step-status pending" id="step2-status">待开始</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>新世界观</label>
+                    <select id="new-worldview">
+                        <option value="都市">都市</option>
+                        <option value="玄幻">玄幻</option>
+                        <option value="科幻">科幻</option>
+                        <option value="末世">末世</option>
+                        <option value="历史">历史</option>
+                        <option value="游戏">游戏</option>
+                        <option value="灵异">灵异</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>核心冲突</label>
+                    <input type="text" id="core-conflict" placeholder="例如：裁员、退婚、背叛、夺权...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>主角人设</label>
+                <div class="form-row">
+                    <input type="text" id="protagonist-name" placeholder="主角姓名">
+                    <input type="text" id="protagonist-identity" placeholder="身份（例如：35岁P7技术专家）">
+                </div>
+                <div class="form-row" style="margin-top: 12px;">
+                    <input type="text" id="protagonist-personality" placeholder="性格特点">
+                    <input type="text" id="protagonist-motivation" placeholder="核心动机">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>金手指/外挂设定</label>
+                <input type="text" id="golden-finger" placeholder="例如：AI辅助系统、重生、系统...">
+            </div>
+
+            <button class="btn btn-primary" id="btn-configure" onclick="configureImitation()">
+                确认配置
+            </button>
+        </div>
+
+        <!-- 阶段三：重构蓝图预览 -->
+        <div class="step-card" id="step3">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <div class="step-title">重构蓝图预览</div>
+                <div class="step-status pending" id="step3-status">待开始</div>
+            </div>
+
+            <p style="color: #666; margin-bottom: 16px;">
+                点击下方按钮，AI将基于拆解结果和新设定，生成原情节与新情节的对照表。
+            </p>
+
+            <button class="btn btn-primary" id="btn-preview" onclick="previewReconstruction()">
+                生成重构蓝图
+            </button>
+
+            <div class="analysis-result hidden" id="blueprint-result">
+                <h4>原情节 vs 新情节 对照表</h4>
+                <div id="blueprint-table-container"></div>
+            </div>
+        </div>
+
+        <!-- 阶段四：生成仿写正文 -->
+        <div class="step-card" id="step4">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <div class="step-title">生成仿写正文</div>
+                <div class="step-status pending" id="step4-status">待开始</div>
+            </div>
+
+            <p style="color: #666; margin-bottom: 16px;">
+                点击下方按钮，AI将基于重构蓝图生成完整的仿写正文。
+            </p>
+
+            <button class="btn btn-primary" id="btn-generate" onclick="generateImitation()">
+                开始生成
+            </button>
+
+            <div class="generated-content hidden" id="generated-result"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/imitation.js?v=1"></script>
+</body>
+</html>
