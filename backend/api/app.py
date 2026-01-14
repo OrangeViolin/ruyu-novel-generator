@@ -20,7 +20,7 @@ from backend.database.models import (
     init_db, get_db, ExampleAnalysis, NovelProject, PlotModule, CrawlTask, Submission,
     Character, PlotOutline, ChapterDraft,
     Agent, AgentExecution, AgentVersion, AgentShare, ReferenceMaterial, WritingStyle,
-    ChannelAgent, Manuscript
+    ChannelAgent, Manuscript, ManuscriptStep, LongNovelMapping, ImitationProject, ImitationStep
 )
 from backend.ai.ai_factory import AIClientFactory
 from backend.generator.novel_builder import NovelBuilder
@@ -33,13 +33,14 @@ from backend.crawler.feilu_crawler import FeiluCrawler
 from backend.crawler.k17_crawler import K17Crawler
 from backend.analyzer.plot_extractor import PlotExtractor
 from backend.analyzer.emotion_analyzer import EmotionAnalyzer
+from backend.generator.expansion_engine import ExpansionEngine
 from config.settings import settings
 
 # 初始化数据库
 init_db()
 
-# 创建FastAPI应用
-app = FastAPI(title="网文生成工具", version="1.0.0")
+# 创建FastAPI应用（禁用自动文档）
+app = FastAPI(title="网文生成工具", version="1.0.0", docs_url=None, redoc_url=None)
 
 # 配置CORS
 app.add_middleware(
@@ -175,6 +176,12 @@ async def root():
     return FileResponse("frontend/index.html")
 
 
+@app.get("/imitation")
+async def imitation_page():
+    """仿写页面"""
+    return FileResponse("frontend/imitation.html")
+
+
 @app.get("/api/health")
 async def health():
     """健康检查"""
@@ -296,6 +303,8 @@ async def list_projects():
                     "id": p.id,
                     "name": p.name,
                     "status": p.status,
+                    "type": p.type,
+                    "source_manuscript_id": p.source_manuscript_id,
                     "word_count": p.word_count,
                     "created_at": p.created_at.isoformat(),
                     "updated_at": p.updated_at.isoformat()
@@ -679,16 +688,18 @@ async def export_novel_to_word(project_id: int):
 
         # 保存到内存
         from io import BytesIO
+        from urllib.parse import quote
         buffer = BytesIO()
         doc.save(buffer)
         buffer.seek(0)
 
-        # 返回Word文件
+        # 返回Word文件 (使用URL编码解决中文文件名问题)
+        encoded_filename = quote(f"{project.name}.docx")
         return Response(
             content=buffer.getvalue(),
             media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             headers={
-                'Content-Disposition': f'attachment; filename="{project.name}.docx"'
+                'Content-Disposition': f'attachment; filename*=UTF-8\'\'{encoded_filename}'
             }
         )
 
@@ -3150,41 +3161,185 @@ async def generate_inspiration_settings(request: InspirationRequest):
 
 
 @app.get("/api/inspiration/bubbles")
-async def get_inspiration_bubbles():
-    """获取灵感气泡 - 生成小说的'灵魂' (主角身份+狗血设定)"""
+@app.post("/api/inspiration/bubbles")
+async def get_inspiration_bubbles(genre: str = None):
+    """获取灵感气泡 - 生成小说的'灵魂' (主角身份+角色设定)
+
+    Args:
+        genre: 可选题材参数，如 "甜宠"、"悬疑"、"大女主"、"脑洞"、"末世"、"复仇"、"仙侠"、"都市反转" 等
+    """
     try:
-        # 随机选择几种题材来增加多样性
-        genres = ["悬疑", "甜宠", "大女主", "脑洞", "末世", "复仇", "仙侠", "都市反转"]
+        # 题材专属模板 - 不同题材有不同风格的"灵魂"设定
+        genre_templates = {
+            "甜宠": {
+                "theme": "甜宠撒糖",
+                "patterns": [
+                    "身份反转+A掉马+真香",
+                    "误会婚姻+暗中守护+掉马打脸",
+                    "替嫁/联姻+隐藏身份+宠妻狂魔",
+                    "欢喜冤家+强制绑定+先婚后爱"
+                ],
+                "examples": [
+                    "联姻三年丈夫从未归家，原来他每天在我身边做贴身暗卫。",
+                    "说好的替嫁残疾大佬，新婚夜他突然站起来把我抵在墙角。",
+                    "高冷上司每晚偷偷溜进我家，说要跟我演一场假戏真做的恋爱。",
+                    "被退婚后转身嫁给他小叔，前任在婚礼上红了眼。"
+                ]
+            },
+            "悬疑": {
+                "theme": "悬疑惊悚",
+                "patterns": [
+                    "身份错位+细思极恐的真相",
+                    "时间循环+死亡预知",
+                    "记忆缺失+身份谜团",
+                    "看似正常+内里恐怖"
+                ],
+                "examples": [
+                    "每天醒来都是同一天，而我的丈夫每天都用不同的方式杀我。",
+                    "搬进新家后，我发现墙纸下藏着一行字：快逃，他在看着你。",
+                    "我失忆后醒来，所有人都叫我'宝贝'，但他们的眼神都在看猎物。",
+                    "儿子告诉我床底下有人，我低头一看，那是一张和我一模一样的脸。"
+                ]
+            },
+            "大女主": {
+                "theme": "女强爽文",
+                "patterns": [
+                    "重生复仇+手撕渣男绿茶",
+                    "马甲掉落+全员震惊",
+                    "穿越逆袭+打脸极品亲戚",
+                    "满级大佬+新手村开挂"
+                ],
+                "examples": [
+                    "被渣男退婚后，我转身嫁给他死对头，次日两家股票涨跌分明。",
+                    "满级女战神穿成娇滴滴嫡女，拔剑那一刻满朝文武跪了一地。",
+                    "首富千金觉醒后收回所有资助，渣哥绿茶姐哭着求我给口饭吃。",
+                    "本是修仙界第一人，穿成内卷高考生后我用聚灵阵刷爆了理综卷。"
+                ]
+            },
+            "脑洞": {
+                "theme": "脑洞大开",
+                "patterns": [
+                    "跨物种/跨时空绑定",
+                    "系统故障+奇葩任务",
+                    "物种交换+人类行为",
+                    "打破第四面墙"
+                ],
+                "examples": [
+                    "我的猫每晚变成人，教我怎么在职场做人，他曾是上市公司CEO。",
+                    "绑定'反派洗白系统'后，我被迫攻略所有被我伤害过的男主。",
+                    "穿越成手机，每天都要帮机主打字回复男神消息，但他怎么越来越暧昧？",
+                    "能听到物品说话后，我家菜刀哭着说：今晚你老公又要用它表演劈叉了。"
+                ]
+            },
+            "末世": {
+                "theme": "末世求生",
+                "patterns": [
+                    "重生囤货+空间开挂",
+                    "异能觉醒+反派求饶",
+                    "基地建设+收服小弟",
+                    "背叛复仇+独自称王"
+                ],
+                "examples": [
+                    "重生回末世前三天，我卖掉公司买下全国最大仓储基地，建起钢铁堡垒。",
+                    "末世觉醒SSS级治愈异能，渣男前夫跪求我救命，我转身喂了丧尸。",
+                    "别人都在逃命，我却带着满级空间在末世开超市，丧尸也要排队扫码。",
+                    "被队友推进丧尸堆后觉醒，我成了丧尸女王，回头问他们还跑吗。"
+                ]
+            },
+            "复仇": {
+                "theme": "复仇爽文",
+                "patterns": [
+                    "全家灭门+十年归来",
+                    "被害惨死+重生改命",
+                    "身份互换+以牙还牙",
+                    "温柔刀+杀人诛心"
+                ],
+                "examples": [
+                    "全家被灭门的那个雨夜，我躲在衣柜里，记住了每一个人的脸。",
+                    "被渣男闺蜜害死后，我重生回订婚宴，当着所有人的手撕了他们。",
+                    "十年后我以新身份归来，曾经的霸凌者跪在地上求我认出他。",
+                    "养父杀父夺母之仇，我用了二十年，叫他一声父，送他下地狱。"
+                ]
+            },
+            "仙侠": {
+                "theme": "仙侠玄幻",
+                "patterns": [
+                    "废材逆袭+血脉觉醒",
+                    "师徒禁忌+身份反转",
+                    "魔尊/仙尊掉马+追妻火葬",
+                    "穿书+改变宿命"
+                ],
+                "examples": [
+                    "废材二小姐觉醒凤凰血脉，那三宗四门跪着求我收他们为徒。",
+                    "仙尊师父下凡渡劫，我陪他当了十年凡人妻，他飞升后却忘了我是谁。",
+                    "穿成恶毒女配后，我把男主全杀了，魔尊却说要嫁给我做压寨夫人。",
+                    "本是修仙界第一剑仙，下山第一件事是去豪门当保姆，只因雇主长得像他。"
+                ]
+            },
+            "都市反转": {
+                "theme": "都市爽文",
+                "patterns": [
+                    "隐藏身份+掉马打脸",
+                    "装穷装废+惊艳反转",
+                    "被看不起+实力碾压",
+                    "替身反转+真爱反转"
+                ],
+                "examples": [
+                    "相亲男嫌弃我是收银员，不知道这家超市是我生日礼物。",
+                    "我装了三年穷屌丝，女朋友提分手那天，我开着法拉利来搬家。",
+                    "全校都嘲笑我是低保户，直到有一天几十辆豪车来接我回家继承家业。",
+                    "假千金炫耀她未婚夫是总裁，而总裁正在我家给我爸端茶倒水。"
+                ]
+            }
+        }
+
         import random
-        selected_genres = random.sample(genres, 5)
-        
-        prompt = f"""请为小说创作生成8条高能、独特、充满'灵魂'的灵感短句。
-每一条灵感都应该是小说的核心设定或'灵魂'，重点在于主角的独特身份、反差感极强的角色设定、或者是一个极其吸睛的剧情钩子。
 
-**题材参考范围:** {', '.join(selected_genres)}
+        # 如果指定了题材，使用该题材模板；否则随机选择
+        if genre and genre in genre_templates:
+            template = genre_templates[genre]
+            selected_genres = [genre]
+        else:
+            genres_list = list(genre_templates.keys())
+            selected_genres = random.sample(genres_list, 3)
+            genre = random.choice(selected_genres)
+            template = genre_templates[genre]
 
-**要求:**
-1. 语言要极具冲击力，能瞬间勾起创作欲望。
-2. 每条长度控制在15-25个字。
-3. 要奇特、有意思、有情绪、有爽点。
-4. 参考格式 (不要照抄):
-   - 世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。
-   - 满级大佬重回新手村，发现全村都是自己当年的死对头。
-   - 联姻三年丈夫从未归家，原来他在家做我的贴身暗卫。
+        # 构建增强的 prompt
+        prompt = f"""你是小说灵感大师，专门生成小说的「灵魂设定」。
 
-请以JSON数组格式返回，不要有任何额外文字:
+**核心原则：** 一篇小说的灵魂=主角的身份/角色设定。这个设定必须足够奇特、有反差、有情绪、有爽点，让读者一眼就想知道"这会是一个怎样的故事"。
+
+**当前题材：** {genre}
+**核心风格：** {template['theme']}
+
+**该题材的灵魂模式：**
+{chr(10).join(f"- {p}" for p in template['patterns'])}
+
+**该题材参考案例（理解这种感觉，但不要照抄）：**
+{chr(10).join(f"- {e}" for e in template['examples'])}
+
+**请生成8条全新的、充满「灵魂」的灵感短句，要求：**
+
+1. **聚焦主角设定** - 每条都要围绕主角的身份、角色、处境展开
+2. **强反差/强冲突** - 身份的反转、地位的落差、认知的颠覆
+3. **有情绪有爽点** - 让人期待"接下来会发生什么"
+4. **画面感极强** - 一句话就能让人脑补出完整场景
+5. **长度控制在18-35字** - 太短说不清楚，太长失去冲击力
+6. **不要和参考案例重复** - 创造全新的设定
+
+请以JSON数组格式返回，不要有任何额外文字：
 ```json
 [
   "灵感1...",
-  "灵感2...", 
+  "灵感2...",
   "..."
 ]
 ```
 """
 
         messages = [{"role": "user", "content": prompt}]
-        # 使用较低的temperature以保证稳定性，但也要有一定的创造性
-        response_content = ai_client._call_api(messages, temperature=0.9, timeout=60.0)
+        response_content = ai_client._call_api(messages, temperature=0.95, max_tokens=2000, timeout=60.0)
         
         # 解析JSON
         try:
@@ -3203,35 +3358,113 @@ async def get_inspiration_bubbles():
             print(f"解析灵感气泡JSON失败: {e}")
             inspirations = []
 
-        # 如果生成失败，返回一些保底数据
-        if not inspirations:
-            inspirations = [
-                "世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。",
-                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
+        # 保底数据 - 按题材分类
+        fallback_inspirations = {
+            "甜宠": [
+                "联姻三年丈夫从未归家，原来他每天在我身边做贴身暗卫。",
+                "说好的替嫁残疾大佬，新婚夜他突然站起来把我抵在墙角。",
+                "高冷上司每晚偷偷溜进我家，说要跟我演一场假戏真做的恋爱。",
+                "被退婚后转身嫁给他小叔，前任在婚礼上红了眼。",
+                "相亲对象嫌弃我太胖，他不知道我是他爱吃的胖胖面包店老板。",
+                "死对头成了我的合租室友，每天早上还要抢我的牙膏。",
+                "暗恋十年的男神向我求婚，我高兴了一整晚，他却在婚礼上说谢谢我不嫌弃他。",
+                "收养的流浪猫每晚变成人，教我怎么攻略高冷男神。"
+            ],
+            "悬疑": [
+                "每天醒来都是同一天，而我的丈夫每天都用不同的方式杀我。",
+                "搬进新家后，我发现墙纸下藏着一行字：快逃，他在看着你。",
+                "我失忆后醒来，所有人都叫我'宝贝'，但他们的眼神都在看猎物。",
+                "儿子告诉我床底下有人，我低头一看，那是一张和我一模一样的脸。",
+                "能听到别人的心声后，我发现我老公一直在思考怎么把我做成标本。",
+                "我的日记本里写着明天的日期，而明天我真的死了一次。",
+                "全家都说我疯了，可我明明看见他们把我的尸体埋在后院。",
+                "每晚12点我家都会多出一个人，第二天早上又消失不见。"
+            ],
+            "大女主": [
+                "被渣男退婚后，我转身嫁给他死对头，次日两家股票涨跌分明。",
+                "满级女战神穿成娇滴滴嫡女，拔剑那一刻满朝文武跪了一地。",
+                "首富千金觉醒后收回所有资助，渣哥绿茶姐哭着求我给口饭吃。",
+                "本是修仙界第一人，穿成内卷高考生后我用聚灵阵刷爆了理综卷。",
                 "穿成虐文女主后，我把剧情全部改成了极简风：能动手绝不吵架。",
-                "满级火系异能者重生回末世前三天，她买下了全国最优秀的仓储避风港。",
+                "假千金炫耀她未婚夫是总裁，而总裁正在我家给我爸端茶倒水。",
+                "全校都嘲笑我是低保户，直到有一天几十辆豪车来接我回家继承家业。",
+                "被推进丧尸堆后觉醒，我成了丧尸女王，回头问队友还跑吗。"
+            ],
+            "脑洞": [
+                "我的猫每晚变成人，教我怎么在职场做人，他曾是上市公司CEO。",
+                "绑定'反派洗白系统'后，我被迫攻略所有被我伤害过的男主。",
+                "穿越成手机，每天都要帮机主打字回复男神消息，但他怎么越来越暧昧？",
+                "能听到物品说话后，我家菜刀哭着说：今晚你老公又要用它表演劈叉了。",
+                "世家富贵男主魂移贪财女主身体里，与她共用躯体替她开挂攀高枝。",
                 "每天都能听到未来儿子的心声，他告诉我一定要离那个黑脸反派远一点。",
+                "修仙大佬穿成内卷高考生，直接用聚灵阵在考场刷题。",
+                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。"
+            ],
+            "末世": [
+                "重生回末世前三天，我卖掉公司买下全国最大仓储基地，建起钢铁堡垒。",
+                "末世觉醒SSS级治愈异能，渣男前夫跪求我救命，我转身喂了丧尸。",
+                "别人都在逃命，我却带着满级空间在末世开超市，丧尸也要排队扫码。",
+                "被队友推进丧尸堆后觉醒，我成了丧尸女王，回头问他们还跑吗。",
+                "满级火系异能者重生回末世前三天，她买下了全国最优秀的仓储避风港。",
+                "末世降临前，我囤了一仓库方便面，成了全人类的救世主。",
+                "别人异能是攻击治愈，我的异能是让丧尸乖乖排队做核酸检测。",
+                "重生后我第一时间杀了自己的未婚夫，因为上一世是他把我推向了丧尸。"
+            ],
+            "复仇": [
+                "全家被灭门的那个雨夜，我躲在衣柜里，记住了每一个人的脸。",
+                "被渣男闺蜜害死后，我重生回订婚宴，当着所有人的手撕了他们。",
+                "十年后我以新身份归来，曾经的霸凌者跪在地上求我认出他。",
+                "养父杀父夺母之仇，我用了二十年，叫他一声父，送他下地狱。",
+                "被推进丧尸堆后觉醒，我成了丧尸女王，回头让队友排队受死。",
+                "全家被灭门时我躲在地窖，十年后我以杀手身份归来血洗仇府。",
+                "前世被渣男害死，重生后我把他的白月光送到了他床上，让他身败名裂。",
+                "我用了十年时间成为他们的雇主，每天以折磨他们为乐。"
+            ],
+            "仙侠": [
+                "废材二小姐觉醒凤凰血脉，那三宗四门跪着求我收他们为徒。",
+                "仙尊师父下凡渡劫，我陪他当了十年凡人妻，他飞升后却忘了我是谁。",
+                "穿成恶毒女配后，我把男主全杀了，魔尊却说要嫁给我做压寨夫人。",
+                "本是修仙界第一剑仙，下山第一件事是去豪门当保姆，只因雇主长得像他。",
+                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
                 "说好的替嫁残疾大佬，谁知道新婚夜他突然站起来教我炼丹。",
                 "修仙大佬穿成内卷高考生，直接用聚灵阵在考场刷题。",
                 "本想安静做个纨绔王妃，却发现府里的影卫全是我的前世旧部。"
+            ],
+            "都市反转": [
+                "相亲男嫌弃我是收银员，不知道这家超市是我生日礼物。",
+                "我装了三年穷屌丝，女朋友提分手那天，我开着法拉利来搬家。",
+                "全校都嘲笑我是低保户，直到有一天几十辆豪车来接我回家继承家业。",
+                "假千金炫耀她未婚夫是总裁，而总裁正在我家给我爸端茶倒水。",
+                "被公司裁员后，我转身买下公司，前老板跪着求我不要开除他。",
+                "我装了三年穷屌丝，女友提分手那天，我开着法拉利来搬家。",
+                "相亲对象嫌弃我是收银员，却不知道这家超市是我生日礼物。",
+                "全家都看不起我摆地摊，直到一辆辆劳斯莱斯来我的摊位进货。"
             ]
+        }
+
+        # 如果生成失败，返回对应题材的保底数据
+        if not inspirations:
+            inspirations = fallback_inspirations.get(genre, fallback_inspirations["脑洞"])
 
         return {
             "success": True,
-            "data": inspirations
+            "data": inspirations,
+            "genre": genre
         }
 
     except Exception as e:
         import traceback
         traceback.print_exc()
         # 发生错误时也返回保底数据，确保前端不崩溃
+        fallback_data = [
+            "世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。",
+            "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
+            "穿成虐文女主后，我把剧情全部改成了极简风：能动手绝不吵架。"
+        ]
         return {
             "success": True,
-            "data": [
-                "世家富贵男主魂移贪财女主身体里，共用躯体开挂攀高枝。",
-                "明明是九代单传的剑仙，下山第一件事竟然是去应聘豪门保姆。",
-                "穿成虐文女主后，我把剧情全部改成了极简风：能动手绝不吵架。"
-            ]
+            "data": fallback_data,
+            "genre": genre or "脑洞"
         }
 
 
@@ -3899,159 +4132,6 @@ async def generate_inspiration_novel(request: NovelRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/short-story/generate-novel")
-async def generate_short_story_novel(request: ShortStoryNovelRequest):
-    """短故事: 一键成文(创建项目)"""
-    try:
-        settings = request.settings
-        outline = request.outline
-        chapters_data = request.chapters
-
-        db = next(get_db())
-
-        # 创建项目
-        project = NovelProject(
-            name=settings.get('title', '未命名'),
-            theme=settings.get('summary', ''),
-            background="", # 短故事通常没有详细背景
-            genre=settings.get('genre', ''),
-            core_conflict=settings.get('main_conflict', ''),
-            target_words=settings.get('target_words', 22000),
-            status="completed",
-            outline=outline,
-            characters=settings.get('characters', []),
-            chapters=[],
-            word_count=0
-        )
-
-        db.add(project)
-        db.commit()
-        db.refresh(project)
-
-        # 转换章节格式
-        chapters = []
-        total_words = 0
-
-        for ch in chapters_data.get('chapters', []):
-            chapter = {
-                "id": ch.get('chapter_number', 1),
-                "title": ch.get('title', ''),
-                "summary": ch.get('summary', ''),
-                "content": ch.get('content', ''),
-                "word_count": ch.get('word_count', 0),
-                "order": ch.get('chapter_number', 1)
-            }
-            chapters.append(chapter)
-            total_words += ch.get('word_count', 0)
-
-        # 更新项目
-        project.chapters = chapters
-        project.word_count = total_words
-        db.commit()
-
-        # 填充规范化数据库表 (简化版)
-        # 1. 创建角色表数据
-        for char in settings.get('characters', []):
-            try:
-                character = Character(
-                    project_id=project.id,
-                    name=char.get('name', '未命名'),
-                    role_type=char.get('role_type', 'supporting'),
-                    importance='core' if char.get('role_type') == 'protagonist' else 'important',
-                    core_identity=char.get('identity'),
-                    core_personality=char.get('personality'),
-                    personality_flaw=char.get('flaw'),
-                    source="ai_generated"
-                )
-                db.add(character)
-            except Exception as e:
-                print(f"创建角色失败: {e}")
-        
-        # 2. 创建大纲和章节草稿
-        for idx, ch in enumerate(chapters_data.get('chapters', [])):
-            try:
-                # 匹配大纲信息 (尝试从outline中找对应章节)
-                outline_info = {}
-                for out_ch in outline.get('chapters', []):
-                    if out_ch.get('chapter_number') == ch.get('chapter_number'):
-                        outline_info = out_ch
-                        break
-                
-                # 创建大纲记录
-                plot_outline = PlotOutline(
-                    project_id=project.id,
-                    level="chapter",
-                    chapter_number=ch.get('chapter_number', idx + 1),
-                    title=ch.get('title', ''),
-                    summary=ch.get('summary', '') or outline_info.get('summary', ''),
-                    plot_points=[outline_info.get('summary', '')], # 简化处理
-                    target_words=outline_info.get('target_words', 2000),
-                    focus_elements=[],
-                    emotion_arc=f"{outline_info.get('emotion_type', '')} {outline_info.get('emotion_intensity', '')}",
-                    characters_involved=[], # 短故事简化
-                    source="ai_generated",
-                    status="generated",
-                    order=idx + 1
-                )
-                db.add(plot_outline)
-                db.flush() # 获取ID
-                
-                # 创建章节草稿
-                chapter_draft = ChapterDraft(
-                    project_id=project.id,
-                    outline_id=plot_outline.id,
-                    chapter_number=ch.get('chapter_number', idx + 1),
-                    title=ch.get('title', ''),
-                    content=ch.get('content', ''),
-                    word_count=ch.get('word_count', 0),
-                    status="completed",
-                    edit_count=0,
-                    ai_revision_count=1,
-                    human_ai_ratio="0:100",
-                    generation_params={"source": "short_story_assistant"}
-                )
-                db.add(chapter_draft)
-                
-            except Exception as e:
-                print(f"创建章节数据失败 (章节 {idx+1}): {e}")
-                
-        db.commit()
-
-        # === 更新稿件状态 ===
-        if request.manuscript_id:
-            try:
-                manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
-                if manuscript:
-                    manuscript.project_id = project.id
-                    manuscript.content = request.chapters
-                    manuscript.status = "completed"
-                    manuscript.updated_at = datetime.now()
-                    db.commit()
-            except Exception as e:
-                print(f"更新稿件状态失败: {e}")
-        
-        return {
-            "success": True, 
-            "data": {
-                "project_id": project.id,
-                "title": project.name,
-                "chapters": chapters,
-                "intro": settings.get('intro', ''), # 假设setting里有intro
-                "manuscript_id": request.manuscript_id # 返回稿件ID
-            },
-            "message": "小说生成完成!"
-        }
-
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"生成小说失败: {str(e)}")
-
-
-# =====================================================================
 # 稿件记录 API (Manuscript History)
 # =====================================================================
 
@@ -4147,6 +4227,7 @@ class ShortStorySettingsRequest(BaseModel):
     targetWords: int = 22000
     chapterCount: int = 8
     tropes: List[str] = []
+    manuscript_id: Optional[int] = None
 
 
 class ShortStoryOutlineRequest(BaseModel):
@@ -4157,11 +4238,6 @@ class ShortStoryChaptersRequest(BaseModel):
     settings: Dict[str, Any]
     outline: Dict[str, Any]
 
-
-class ShortStoryNovelRequest(BaseModel):
-    settings: Dict[str, Any]
-    outline: Dict[str, Any]
-    chapters: Dict[str, Any]
 
 
 class ShortStoryReviewRequest(BaseModel):
@@ -5262,6 +5338,324 @@ async def upload_corpus(agent_id: int, files: List[UploadFile] = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ========== 长文生成相关 ==========
+
+from backend.generator.long_novel_generator import LongNovelGenerator
+long_novel_generator = LongNovelGenerator()
+
+class CreateLongProjectRequest(BaseModel):
+    manuscript_id: int
+    title: str
+
+class ExpandVolumeRequest(BaseModel):
+    project_id: int
+    chapter_index: int # 短篇章节索引 (0-7)
+
+class GenerateLongChapterRequest(BaseModel):
+    project_id: int
+    chapter_id: int # 数据库ID
+
+# ========== 长篇扩写助手 (Long Story Assistant) ==========
+
+expansion_engine = ExpansionEngine()
+
+@app.post("/api/long-novel/create")
+async def create_long_project(request: CreateLongProjectRequest):
+    """从短篇稿件创建长篇项目"""
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
+        if not manuscript:
+            return {"success": False, "message": "找不到原始稿件"}
+            
+        # 创建长篇项目
+        new_project = NovelProject(
+            name=request.title,
+            type="long_novel",
+            source_manuscript_id=manuscript.id,
+            status="planning",
+            outline={"source": "short_story_expansion"},
+            chapters=[],
+            word_count=0
+        )
+        db.add(new_project)
+        db.commit()
+        db.refresh(new_project)
+        
+        return {"success": True, "data": {"project_id": new_project.id}}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+@app.get("/api/long-novel/{project_id}")
+async def get_long_project(project_id: int):
+    """获取长篇项目详情 (包含卷和章节结构)"""
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        project = db.query(NovelProject).filter(NovelProject.id == project_id).first()
+        if not project:
+            return {"success": False, "message": "项目不存在"}
+
+        # 获取映射关系 (卷结构)
+        mappings = db.query(LongNovelMapping).filter(LongNovelMapping.project_id == project_id).order_by(LongNovelMapping.volume_number).all()
+        
+        # 获取所有生成的大纲/章节
+        # 这里为了简化，我们假设 plot_outlines 表存了大纲，chapter_drafts 存了正文
+        # 实际需要根据前面的数据库设计来关联
+        
+        # 构造返回结构
+        volumes = []
+        for m in mappings:
+            # 查询本卷下的章节
+            chapters = db.query(ChapterDraft).join(PlotOutline).filter(
+                PlotOutline.project_id == project_id,
+                ChapterDraft.chapter_number >= m.start_chapter,
+                ChapterDraft.chapter_number <= m.end_chapter
+            ).all()
+            
+            # 手动组装 chapters info 
+            # (这里简化处理，实际应该 join 查询 PlotOutline 获取标题和摘要)
+            chapter_list = []
+            outlines = db.query(PlotOutline).filter(
+                PlotOutline.project_id == project_id,
+                PlotOutline.chapter_number >= m.start_chapter,
+                PlotOutline.chapter_number <= m.end_chapter
+            ).order_by(PlotOutline.chapter_number).all()
+            
+            for ol in outlines:
+                draft = db.query(ChapterDraft).filter(ChapterDraft.outline_id == ol.id).first()
+                focus = json.loads(ol.focus_elements) if ol.focus_elements else {}
+                chapter_list.append({
+                    "id": draft.id if draft else None,
+                    "outline_id": ol.id,
+                    "chapter_number": ol.chapter_number,
+                    "title": ol.title,
+                    "summary": ol.summary,
+                    "main_conflict": focus.get("main_conflict"),
+                    "sub_conflict": focus.get("sub_conflict"),
+                    "emotion_arc": focus.get("emotion_arc"),
+                    "status": draft.status if draft else "planning",
+                    "word_count": draft.word_count if draft else 0,
+                    "content": draft.content if draft else ""
+                })
+            
+            volumes.append({
+                "volume_number": m.volume_number,
+                "title": m.short_chapter_title,
+                "summary": m.short_chapter_summary,
+                "chapters": chapter_list
+            })
+            
+        return {
+            "success": True, 
+            "data": {
+                "project": {
+                    "id": project.id,
+                    "name": project.name,
+                    "source_manuscript_id": project.source_manuscript_id
+                },
+                "volumes": volumes
+            }
+        }
+    finally:
+        db.close()
+
+@app.post("/api/long-novel/expand-volume")
+async def expand_volume(request: ExpandVolumeRequest):
+    """
+    【新算法逻辑】将短篇的一章扩写为长篇的一卷 (裂变为 18-20 章)
+    """
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        project = db.query(NovelProject).filter(NovelProject.id == request.project_id).first()
+        if not project or not project.source_manuscript_id:
+            return {"success": False, "message": "无效的长篇项目"}
+            
+        manuscript = db.query(Manuscript).filter(Manuscript.id == project.source_manuscript_id).first()
+        if not manuscript:
+            return {"success": False, "message": "找不到源短篇稿件"}
+            
+        # 1. 使用 ExpansionEngine 裂变大纲 (1:18-20)
+        try:
+            expanded_data = expansion_engine.plan_volume_expansion(manuscript, request.chapter_index)
+        except Exception as ai_err:
+            return {"success": False, "message": f"Expansion planning failed: {str(ai_err)}"}
+            
+        if not expanded_data:
+            return {"success": False, "message": "AI生成结果为空"}
+            
+        # 2. 计算章节号范围 (累积计算)
+        last_mapping = db.query(LongNovelMapping).filter(LongNovelMapping.project_id == request.project_id).order_by(LongNovelMapping.end_chapter.desc()).first()
+        start_chap = (last_mapping.end_chapter + 1) if last_mapping else 1
+        
+        chapters_data = expanded_data.get("chapters", [])
+        num_new_chapters = len(chapters_data)
+        end_chap = start_chap + num_new_chapters - 1
+        
+        # 3. 保存映射
+        short_chapters = manuscript.content.get('chapters', [])
+        short_chap_title = short_chapters[request.chapter_index].get('title') if request.chapter_index < len(short_chapters) else f"第{request.chapter_index+1}章"
+        short_chap_summary = short_chapters[request.chapter_index].get('summary', "") if request.chapter_index < len(short_chapters) else ""
+        
+        mapping = LongNovelMapping(
+            project_id=project.id,
+            short_chapter_title=short_chap_title,
+            short_chapter_summary=short_chap_summary,
+            volume_number=request.chapter_index + 1,
+            start_chapter=start_chap,
+            end_chapter=end_chap
+        )
+        db.add(mapping)
+        db.flush()
+        
+        # 4. 批量创建 PlotOutline 和 ChapterDraft
+        for i, ch_data in enumerate(chapters_data):
+            curr_ch_num = start_chap + i
+            outline = PlotOutline(
+                project_id=project.id,
+                level="chapter",
+                parent_id=mapping.id,
+                chapter_number=curr_ch_num,
+                title=ch_data.get("title"),
+                summary=ch_data.get("summary"),
+                target_words=3000,
+                focus_elements=json.dumps({
+                    "main_conflict": ch_data.get("main_conflict"),
+                    "sub_conflict": ch_data.get("sub_conflict"),
+                    "emotion_arc": ch_data.get("emotion_arc")
+                }),
+                status="ready"
+            )
+            db.add(outline)
+            db.flush()
+            
+            draft = ChapterDraft(
+                project_id=project.id,
+                outline_id=outline.id,
+                chapter_number=curr_ch_num,
+                title=ch_data.get("title"),
+                status="draft"
+            )
+            db.add(draft)
+            
+        db.commit()
+        return {"success": True, "data": {"volume_number": mapping.volume_number, "num_chapters": num_new_chapters}}
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+@app.post("/api/long-novel/preview-outline")
+async def preview_long_outline(request: CreateLongProjectRequest):
+    """
+    【预览功能】生成完整的长篇扩写大纲预览（不保存到数据库）
+
+    用于在创建长篇项目前，让用户预览整体结构规划
+    返回完整的180章规划结构，方便用户确认是否符合预期
+    """
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        manuscript = db.query(Manuscript).filter(Manuscript.id == request.manuscript_id).first()
+        if not manuscript:
+            return {"success": False, "message": "找不到原始稿件"}
+
+        # 使用 ExpansionEngine 生成完整大纲规划
+        outline_plan = expansion_engine.generate_full_outline_plan(manuscript)
+
+        return {
+            "success": True,
+            "data": outline_plan
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+
+@app.post("/api/long-novel/generate-chapter")
+async def generate_long_chapter(request: GenerateLongChapterRequest):
+    """【新扩写策略】生成长篇单章正文 (3000字+)"""
+    db_gen = get_db()
+    db = next(db_gen)
+    try:
+        # 1. 获取草稿和关联大纲
+        draft = db.query(ChapterDraft).filter(ChapterDraft.id == request.chapter_id).first()
+        if not draft:
+            return {"success": False, "message": "章节不存在"}
+            
+        outline = db.query(PlotOutline).filter(PlotOutline.id == draft.outline_id).first()
+        project = db.query(NovelProject).filter(NovelProject.id == draft.project_id).first()
+        
+        # 2. 获取卷信息 (Volume mapping)
+        mapping = db.query(LongNovelMapping).filter(
+            LongNovelMapping.project_id == project.id,
+            LongNovelMapping.start_chapter <= draft.chapter_number,
+            LongNovelMapping.end_chapter >= draft.chapter_number
+        ).first()
+        
+        volume_info = {
+            "volume_title": mapping.short_chapter_title if mapping else "未知卷",
+            "volume_summary": mapping.short_chapter_summary if mapping else ""
+        }
+        
+        # 3. 构造上下文 (前3章正文)
+        prev_drafts = db.query(ChapterDraft).filter(
+            ChapterDraft.project_id == project.id,
+            ChapterDraft.chapter_number < draft.chapter_number
+        ).order_by(ChapterDraft.chapter_number.desc()).limit(3).all()
+        
+        context = "前情提要:\n" + "\n".join([f"第{d.chapter_number}章 {d.title}: {d.content[:500]}..." for d in reversed(prev_drafts)])
+        
+        # 4. 获取人物信息 (从原始稿件中提取)
+        characters = []
+        manuscript = db.query(Manuscript).filter(Manuscript.id == project.source_manuscript_id).first()
+        if manuscript and manuscript.content:
+            characters = manuscript.content.get('characters', [])
+        
+        # 5. 调用 ExpansionEngine 执行高质量扩写
+        focus_elements = json.loads(outline.focus_elements) if outline.focus_elements else {}
+        chapter_outline_info = {
+            "title": outline.title,
+            "summary": outline.summary,
+            "main_conflict": focus_elements.get("main_conflict", ""),
+            "sub_conflict": focus_elements.get("sub_conflict", ""),
+            "emotion_arc": focus_elements.get("emotion_arc", "")
+        }
+        
+        chapter_content = expansion_engine.generate_long_chapter(
+            volume_info=volume_info,
+            chapter_outline=chapter_outline_info,
+            context=context,
+            characters=characters
+        )
+        
+        # 6. 保存正文
+        draft.content = chapter_content
+        draft.word_count = len(chapter_content)
+        draft.status = "completed"
+        draft.updated_at = datetime.now()
+        
+        db.commit()
+        
+        return {"success": True, "data": {"content": chapter_content, "word_count": len(chapter_content)}}
+        
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        db.close()
+
+
 @app.post("/api/channel-agents/{agent_id}/train")
 async def train_channel_agent(agent_id: int):
     """AI拆解训练 - 从语料中提取风格特征"""
@@ -5512,6 +5906,151 @@ async def generate_with_agent(agent_id: int, request: dict):
         db.commit()
 
         return {"success": True, "data": {"content": response, "word_count": len(response)}}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== 仿写生成系统 ==========
+
+from backend.api.imitation_api import (
+    ImitationGenerator,
+    DeconstructionRequest,
+    ConfigurationRequest,
+    PreviewRequest,
+    GenerationRequest
+)
+
+
+@app.post("/api/imitation/deconstruct")
+async def deconstruct_original(request: DeconstructionRequest):
+    """阶段一：深度拆解原文"""
+    try:
+        db = next(get_db())
+        generator = ImitationGenerator(db)
+        result = generator.deconstruct(request)
+
+        if result.success:
+            return {"success": True, "project_id": result.project_id, "analysis": result.analysis}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/imitation/configure")
+async def configure_imitation(request: ConfigurationRequest):
+    """阶段二：配置新设定"""
+    try:
+        db = next(get_db())
+        generator = ImitationGenerator(db)
+        result = generator.configure(request)
+
+        if result.success:
+            return {"success": True, "message": result.message}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/imitation/preview")
+async def preview_reconstruction(request: PreviewRequest):
+    """阶段三：生成重构蓝图预览"""
+    try:
+        db = next(get_db())
+        generator = ImitationGenerator(db)
+        result = generator.preview(request)
+
+        if result.success:
+            return {"success": True, "blueprint": result.blueprint}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/imitation/generate")
+async def generate_imitation(request: GenerationRequest):
+    """阶段四：生成仿写正文"""
+    try:
+        db = next(get_db())
+        generator = ImitationGenerator(db)
+        result = generator.generate(request)
+
+        if result.success:
+            return {"success": True, "content": result.content}
+        else:
+            return {"success": False, "message": result.message}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/imitation/projects/{project_id}")
+async def get_imitation_project(project_id: int):
+    """获取仿写项目详情"""
+    try:
+        db = next(get_db())
+        project = db.query(ImitationProject).filter(ImitationProject.id == project_id).first()
+
+        if not project:
+            raise HTTPException(status_code=404, detail="项目不存在")
+
+        return {
+            "success": True,
+            "data": {
+                "id": project.id,
+                "title": project.title,
+                "status": project.status,
+                "original_title": project.original_title,
+                "original_content": project.original_content,
+                "new_worldview": project.new_worldview,
+                "protagonist_setting": project.protagonist_setting,
+                "core_conflict": project.core_conflict,
+                "golden_finger": project.golden_finger,
+                "deconstruction_result": project.deconstruction_result,
+                "reconstruction_blueprint": project.reconstruction_blueprint,
+                "generated_content": project.generated_content,
+                "created_at": project.created_at.isoformat(),
+                "updated_at": project.updated_at.isoformat()
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/imitation/projects")
+async def list_imitation_projects():
+    """获取所有仿写项目列表"""
+    try:
+        db = next(get_db())
+        projects = db.query(ImitationProject).order_by(ImitationProject.created_at.desc()).all()
+
+        return {
+            "success": True,
+            "data": [
+                {
+                    "id": p.id,
+                    "title": p.title,
+                    "status": p.status,
+                    "original_title": p.original_title,
+                    "new_worldview": p.new_worldview,
+                    "created_at": p.created_at.isoformat()
+                }
+                for p in projects
+            ]
+        }
     except Exception as e:
         import traceback
         traceback.print_exc()

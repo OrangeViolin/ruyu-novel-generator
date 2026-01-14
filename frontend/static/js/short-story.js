@@ -102,6 +102,12 @@ async function generateShortStorySettings(overriddenSummary = null) {
         tropes.push(cb.value);
     });
 
+    // 收集选中的文风
+    const styles = [];
+    document.querySelectorAll('input[name="short-story-style"]:checked').forEach(cb => {
+        styles.push(cb.value);
+    });
+
     // 验证题材
     if (!genre) {
         alert('请选择题材类型');
@@ -116,6 +122,7 @@ async function generateShortStorySettings(overriddenSummary = null) {
         chapterCount: parseInt(chapterCount),
         chapterCount: parseInt(chapterCount),
         tropes,
+        styles,  // 文风设定
         model_provider: document.getElementById('model-provider-select')?.value || 'deepseek',
         model_name: null,
         timestamp: Date.now(), // 防止缓存
@@ -508,41 +515,40 @@ async function generateShortStoryNovel() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                body: JSON.stringify({
-                    settings: shortStoryData.step2,
-                    outline: shortStoryData.step3,
-                    chapters: shortStoryData.step4,
-                    manuscript_id: shortStoryData.manuscriptId
-                })
-            });
+                settings: shortStoryData.step2,
+                outline: shortStoryData.step3,
+                chapters: shortStoryData.step4,
+                manuscript_id: shortStoryData.manuscriptId
+            })
+        });
 
-            const result = await response.json();
+        const result = await response.json();
 
-            if(result.success) {
-                shortStoryData.step5 = result.data;
-        shortStoryData.manuscriptId = result.data.manuscript_id;
-        displayShortStoryResult(result.data);
-        document.getElementById('short-story-step-5-actions').style.display = 'flex';
-        return true;
-    } else {
-        novelResult.innerHTML = `
+        if (result.success) {
+            shortStoryData.step5 = result.data;
+            shortStoryData.manuscriptId = result.data.manuscript_id;
+            displayShortStoryResult(result.data);
+            document.getElementById('short-story-step-5-actions').style.display = 'flex';
+            return true;
+        } else {
+            novelResult.innerHTML = `
                 <div class="loading-state" style="color: var(--danger-color);">
                     <p>❌ 生成失败: ${result.message || '未知错误'}</p>
                     <button class="btn btn-primary" onclick="goToShortStoryStep(4)" style="margin-top: 1rem;">返回重试</button>
                 </div>
             `;
-        return false;
-    }
-} catch (error) {
-    console.error('短故事成文失败:', error);
-    novelResult.innerHTML = `
+            return false;
+        }
+    } catch (error) {
+        console.error('短故事成文失败:', error);
+        novelResult.innerHTML = `
             <div class="loading-state" style="color: var(--danger-color);">
                 <p>❌ 生成失败: ${error.message}</p>
                 <button class="btn btn-primary" onclick="goToShortStoryStep(4)" style="margin-top: 1rem;">返回重试</button>
             </div>
         `;
-    return false;
-}
+        return false;
+    }
 }
 
 // 显示最终结果
@@ -825,6 +831,7 @@ function renderManuscriptList(manuscripts) {
                 <td>
                     <button class="btn btn-sm btn-primary" onclick="loadManuscript(${m.id})">📂 打开</button>
                     ${m.status === 'completed' ? `<button class="btn btn-sm btn-secondary" onclick="viewManuscriptReview(${m.id})">🔍 审稿</button>` : ''}
+                    ${m.status === 'completed' ? `<button class="btn btn-sm" style="background-color: #8b5cf6;" onclick="createLongNovelFromManuscript(${m.id}, '${escapeHtml(m.title)}')">🚀 扩展长篇</button>` : ''}
                 </td>
             </tr>
         `;
