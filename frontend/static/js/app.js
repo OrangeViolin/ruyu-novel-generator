@@ -28,6 +28,11 @@ function switchTab(tabName) {
     if (targetTab) {
         targetTab.classList.add('active');
         targetTab.style.display = 'block';
+
+        // 特殊处理：进入长篇助手时自动加载列表
+        if (tabName === 'long-novel') {
+            showLongNovelManagement();
+        }
     }
 }
 
